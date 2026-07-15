@@ -13,11 +13,10 @@
     "prisma:migrate": "prisma migrate dev"
   },
   "dependencies": {
-    "@prisma/client": "*",
     "bcryptjs": "*",
     "bullmq": "*",
     "cors": "*",
-    "dotenv": "*",
+    "dotenv": "^17.4.2",
     "express": "*",
     "jsonwebtoken": "*",
     "mammoth": "*",
@@ -29,7 +28,6 @@
     "@types/express": "*",
     "@types/node": "*",
     "eslint": "*",
-    "prisma": "*",
     "tsx": "*",
     "typescript": "*",
     "vitest": "*"
