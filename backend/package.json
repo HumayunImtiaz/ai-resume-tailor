@@ -13,6 +13,7 @@
     "prisma:migrate": "prisma migrate dev"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.3",
     "bcryptjs": "*",
     "bullmq": "*",
     "cors": "*",
@@ -28,6 +29,7 @@
     "@types/express": "*",
     "@types/node": "*",
     "eslint": "*",
+    "prisma": "^6.19.3",
     "tsx": "*",
     "typescript": "*",
     "vitest": "*"
