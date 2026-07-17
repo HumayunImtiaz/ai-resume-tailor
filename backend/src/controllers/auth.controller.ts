@@ -1,5 +1,5 @@
 import { Request, Response, RequestHandler } from 'express';
-import { signupSchema } from '../validators/auth.validator';
+import { signupSchema, loginSchema } from '../validators/auth.validator';
 import { authService } from '../services/auth.service';
 import { sendResponse } from '../utils/apiResponse';
 
@@ -25,5 +25,28 @@ export const authController = {
     }
 
     sendResponse(res, 201, 'success', result.data, 'Account created successfully');
+  }) as RequestHandler,
+
+  login: (async (req: Request, res: Response) => {
+    const validationResult = loginSchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+      const errorMessage = validationResult.error.issues[0]?.message || 'Validation failed';
+      sendResponse(res, 400, 'error', null, errorMessage);
+      return;
+    }
+
+    const result = await authService.login(validationResult.data);
+
+    if (!result.success) {
+      if (result.error === 'Invalid email or password') {
+        sendResponse(res, 401, 'error', null, result.error);
+      } else {
+        sendResponse(res, 500, 'error', null, 'Something went wrong, please try again');
+      }
+      return;
+    }
+
+    sendResponse(res, 200, 'success', result.data, 'Login successful');
   }) as RequestHandler
 };
