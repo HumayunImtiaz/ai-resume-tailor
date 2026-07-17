@@ -90,5 +90,27 @@ export const authService = {
       console.error('Login error:', error);
       return { success: false as const, error: "Something went wrong, please try again" };
     }
+  },
+
+  getProfile: async (userId: string) => {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          email: true
+        }
+      });
+
+      if (!user) {
+        return { success: false as const, error: "User not found" };
+      }
+
+      return { success: true as const, data: user };
+    } catch (error) {
+      console.error('Profile error:', error);
+      return { success: false as const, error: "Something went wrong, please try again" };
+    }
   }
 };

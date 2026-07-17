@@ -48,5 +48,22 @@ export const authController = {
     }
 
     sendResponse(res, 200, 'success', result.data, 'Login successful');
+  }) as RequestHandler,
+
+  getProfile: (async (req: Request, res: Response) => {
+    const userId = req.userId as string; // Guaranteed by requireAuth middleware
+
+    const result = await authService.getProfile(userId);
+
+    if (!result.success) {
+      if (result.error === 'User not found') {
+        sendResponse(res, 404, 'error', null, result.error);
+      } else {
+        sendResponse(res, 500, 'error', null, 'Something went wrong, please try again');
+      }
+      return;
+    }
+
+    sendResponse(res, 200, 'success', result.data, 'Profile retrieved successfully');
   }) as RequestHandler
 };
