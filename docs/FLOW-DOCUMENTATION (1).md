@@ -219,3 +219,68 @@ same ink navy / parchment / amber design system as the auth pages.
 
 **Status:** Sprint 2 — **Complete**. Upload (PDF + DOCX), list, and
 delete all tested end-to-end via Swagger and the frontend dashboard.
+
+---
+
+## Sprint 3 — Job Description Input, Queue Wiring, Async Processing
+
+```
+Client (dashboard/tailor page)
+   │
+Selects a resume, pastes job title + description
+   │
+POST /api/jobs   { resumeId, title, company, rawText }
+   │  Authorization: Bearer <token>
+   │
+Routes → requireAuth → Controller
+   │
+Controller validates (Zod) → Service.createJobDescription(userId, ...)
+   │
+Ownership check: does this resumeId belong to userId?
+   │
+ No ──► { success:false, error:"Resume not found" } ──► 404
+   │
+ Yes
+   │
+Prisma: create JobDescription record
+   │
+addTailorJob({ userId, resumeId, jobDescriptionId })
+   │
+        ┌──────────────────────────────┐
+        │   Redis-backed BullMQ Queue    │  ("tailor-resume")
+        └──────────────────────────────┘
+   │                                    │
+Controller responds 201                 Worker (same process, separate
+immediately with jobDescription         listener) picks up the job:
++ queueJobId                              - logs "started processing"
+   │                                      - waits 2.5s (mock — real AI
+Client polls                               work replaces this in Sprint 4/5)
+GET /api/jobs/status/:jobId                - creates TailoredVersion record
+every 1.5s                                   (matchScore:0, missingKeywords:[],
+   │                                          tailoredText:"" — placeholders)
+   │                                      - logs "completed"
+   └──────────────◄──────────────────────────┘
+        state: "waiting" → "active" → "completed"
+```
+
+**Key decisions:**
+- The API responds immediately after queueing (202/201), never waiting on
+  the worker — this is the core reason for using a queue at all: the HTTP
+  request/response cycle never blocks on background work.
+- The worker runs inside the same Node process as the Express server for
+  local development simplicity. In production this would be split into
+  its own container/process so it can scale independently of the API.
+- Ownership is checked in the service layer before a job is ever queued —
+  a user can only tailor resumes they own.
+- `TailoredVersion` is created with placeholder values (`matchScore: 0`,
+  empty `tailoredText`) for now; Sprint 4 replaces the matching logic and
+  Sprint 5 replaces the AI rewrite logic, without changing this queue flow.
+
+**Frontend:** `app/dashboard/tailor/page.tsx` — job description form,
+animated multi-step progress UI (scan-line motif reused from the auth
+pages) during polling, and a success state with placeholder cards for fit
+score / missing keywords / tailored draft.
+
+**Status:** Sprint 3 — **Complete**. Full flow tested end-to-end: job
+created → queued → picked up by worker → processed → status polled →
+success UI shown, with worker logs confirmed in the terminal.

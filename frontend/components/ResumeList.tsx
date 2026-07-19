@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { FileText, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { FileText, Sparkles, Trash2 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 
 interface Resume {
@@ -131,6 +132,15 @@ export default function ResumeList({ refreshKey }: ResumeListProps) {
               Uploaded {formatDate(resume.uploadedAt)}
             </p>
           </div>
+
+          {/* Tailor button */}
+          <Link
+            href={`/dashboard/tailor?resumeId=${resume.id}`}
+            className="px-3.5 py-2 rounded-lg bg-amber/10 text-amber font-medium text-xs hover:bg-amber/20 transition-colors focus:outline-none focus:ring-2 focus:ring-amber focus:ring-offset-2 flex items-center gap-1.5 flex-shrink-0"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            Tailor
+          </Link>
 
           {/* Delete button */}
           <button
