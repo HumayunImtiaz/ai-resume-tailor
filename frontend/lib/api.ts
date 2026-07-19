@@ -3,7 +3,10 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
   const url = `${baseUrl}${path.startsWith('/') ? path : '/' + path}`;
 
   const headers = new Headers(options.headers);
-  if (!headers.has("Content-Type")) {
+  // Don't set Content-Type for FormData — let the browser set the
+  // multipart boundary automatically.
+  const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
+  if (!isFormData && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 

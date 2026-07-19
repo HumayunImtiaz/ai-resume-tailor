@@ -160,3 +160,62 @@ panel hides on mobile.
 
 **Status:** Sprint 1 — **Complete**. Full signup → login → protected
 route → frontend flow works end-to-end.
+
+---
+
+## Sprint 2 — Resume Upload, List, Delete
+
+```
+Client (dashboard, drag-drop or click-to-browse)
+   │
+POST /api/resumes/upload  (multipart/form-data, field "resume")
+   │  Authorization: Bearer <token>
+   │
+Routes → requireAuth → multer (memory storage, 5MB limit) → Controller
+   │
+Controller reads req.userId + req.file
+   │
+Service.uploadResume(userId, file)
+   │
+extractText(mimetype, buffer)
+   │
+ PDF? ──── pdf-parse         DOCX? ──── mammoth        other ──── unsupported
+   │                             │                            │
+   └─────────────┬───────────────┘                    { success:false,
+                  │                                      error: "..." }
+            rawText extracted
+                  │
+        Prisma: create Resume record
+        (userId, originalFilename, rawText)
+                  │
+        { success: true, data: { id, originalFilename, uploadedAt } }
+                  │
+              Controller → sendResponse (201 / 422 / 500)
+                  │
+                Client → shown in Uploaded Resumes list
+
+---
+
+GET /api/resumes        → list resumes for req.userId only
+DELETE /api/resumes/:id → deleteMany WHERE id AND userId
+                           (ownership check — a user can never delete
+                            another user's resume; 404 if no match)
+```
+
+**Key decisions:**
+- `pdf-parse`'s default import doesn't work cleanly with this TS setup —
+  had to destructure/cast its CommonJS export shape manually.
+- List endpoint deliberately excludes `rawText` from the response (keeps
+  the payload light; full text isn't needed until the tailoring step).
+- Delete uses `deleteMany` with both `id` and `userId` in the `where`
+  clause rather than `delete` — this makes ownership enforcement part of
+  the query itself, not a separate check-then-delete step (avoids a race
+  condition and is a one-line safety net).
+
+**Frontend:** `components/ResumeUploader.tsx` (drag-drop, upload state,
+success/error messaging) and `components/ResumeList.tsx` (fetches list on
+mount, renders filename + formatted date, delete button) — both under the
+same ink navy / parchment / amber design system as the auth pages.
+
+**Status:** Sprint 2 — **Complete**. Upload (PDF + DOCX), list, and
+delete all tested end-to-end via Swagger and the frontend dashboard.
