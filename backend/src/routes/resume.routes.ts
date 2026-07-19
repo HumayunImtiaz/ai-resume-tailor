@@ -57,4 +57,49 @@ router.post(
   resumeController.uploadResume
 );
 
+/**
+ * @swagger
+ * /api/resumes:
+ *   get:
+ *     summary: List all resumes for the authenticated user
+ *     tags: [Resumes]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Resumes retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.get('/', requireAuth, resumeController.listResumes);
+
+/**
+ * @swagger
+ * /api/resumes/{id}:
+ *   delete:
+ *     summary: Delete a resume by ID
+ *     tags: [Resumes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Resume ID
+ *     responses:
+ *       200:
+ *         description: Resume deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Resume not found
+ *       500:
+ *         description: Server error
+ */
+router.delete('/:id', requireAuth, resumeController.deleteResume);
+
 export default router;

@@ -49,5 +49,41 @@ export const resumeService = {
       console.error('Upload resume error:', error);
       return { success: false as const, error: 'Something went wrong, please try again' };
     }
+  },
+
+  listResumes: async (userId: string) => {
+    try {
+      const resumes = await prisma.resume.findMany({
+        where: { userId },
+        select: {
+          id: true,
+          originalFilename: true,
+          uploadedAt: true
+        },
+        orderBy: { uploadedAt: 'desc' }
+      });
+
+      return { success: true as const, data: resumes };
+    } catch (error) {
+      console.error('List resumes error:', error);
+      return { success: false as const, error: 'Something went wrong, please try again' };
+    }
+  },
+
+  deleteResume: async (userId: string, resumeId: string) => {
+    try {
+      const result = await prisma.resume.deleteMany({
+        where: { id: resumeId, userId }
+      });
+
+      if (result.count === 0) {
+        return { success: false as const, error: 'Resume not found' };
+      }
+
+      return { success: true as const, data: null };
+    } catch (error) {
+      console.error('Delete resume error:', error);
+      return { success: false as const, error: 'Something went wrong, please try again' };
+    }
   }
 };
