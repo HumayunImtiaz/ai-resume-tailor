@@ -10,7 +10,7 @@ function getRequiredEnv(key: string): string {
   return value;
 }
 
-const env = {
+export const env = {
   port: parseInt(process.env.PORT || '4000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
   databaseUrl: getRequiredEnv('DATABASE_URL'),
@@ -20,7 +20,7 @@ const env = {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379', 10),
   },
-  anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
+  groqApiKey: getRequiredEnv('GROQ_API_KEY'),
 };
 
 export default env;
