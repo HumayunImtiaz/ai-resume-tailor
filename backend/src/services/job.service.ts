@@ -67,6 +67,31 @@ export const jobService = {
 
       const state = await job.getState();
 
+      if (state === 'completed') {
+        const { resumeId, jobDescriptionId } = job.data;
+
+        // Find the most recent TailoredVersion for this resume + job description pair
+        const tailoredVersion = await prisma.tailoredVersion.findFirst({
+          where: { resumeId, jobDescriptionId },
+          orderBy: { createdAt: 'desc' },
+          select: { matchScore: true, missingKeywords: true },
+        });
+
+        if (tailoredVersion) {
+          return {
+            success: true as const,
+            data: {
+              state,
+              matchScore: tailoredVersion.matchScore,
+              missingKeywords: tailoredVersion.missingKeywords,
+            },
+          };
+        }
+
+        // Edge case: worker completed but record not yet visible (race condition)
+        return { success: true as const, data: { state } };
+      }
+
       return {
         success: true as const,
         data: { state },

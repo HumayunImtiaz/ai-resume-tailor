@@ -71,6 +71,31 @@ router.post('/', requireAuth, jobController.createJob);
  *     responses:
  *       200:
  *         description: Job status retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     state:
+ *                       type: string
+ *                       enum: [waiting, active, completed, failed, delayed, unknown]
+ *                       example: completed
+ *                     matchScore:
+ *                       type: integer
+ *                       description: AI-computed match percentage (0–100). Present only when state is "completed".
+ *                       example: 78
+ *                     missingKeywords:
+ *                       type: array
+ *                       description: Keywords from the job description missing in the resume. Present only when state is "completed".
+ *                       items:
+ *                         type: string
+ *                       example: ["Kubernetes", "GraphQL"]
  *       401:
  *         description: Unauthorized
  *       404:
