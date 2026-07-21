@@ -2,6 +2,7 @@ import { Worker, Job } from 'bullmq';
 import { redisConnection } from '../config/redis';
 import prisma from '../config/database';
 import { TailorJobPayload } from '../queues/tailor.queue';
+import { analyzeMatch } from '../services/ai.service';
 
 // Initialize the worker setup function
 export const initializeTailorWorker = () => {
@@ -9,20 +10,50 @@ export const initializeTailorWorker = () => {
     'tailor-resume',
     async (job: Job<TailorJobPayload>) => {
       console.log(`[Worker] Started processing tailor job: ${job.id}`);
-      
-      const { userId, resumeId, jobDescriptionId } = job.data;
 
-      // Simulate processing parsing/matching (2.5 seconds delay)
-      await new Promise((resolve) => setTimeout(resolve, 2500));
+      const { resumeId, jobDescriptionId } = job.data;
 
-      // Create TailoredVersion skeleton/placeholder
+      // Fetch the actual Resume and JobDescription records to get their rawText
+      const [resume, jobDescription] = await Promise.all([
+        prisma.resume.findUnique({ where: { id: resumeId } }),
+        prisma.jobDescription.findUnique({ where: { id: jobDescriptionId } }),
+      ]);
+
+      if (!resume || !jobDescription) {
+        throw new Error(
+          `[Worker] Job ${job.id}: Could not find resume (${resumeId}) or job description (${jobDescriptionId}) in database.`
+        );
+      }
+
+      // Run real AI analysis
+      const aiResult = await analyzeMatch(resume.rawText, jobDescription.rawText);
+
+      let matchScore: number;
+      let missingKeywords: string[];
+
+      if (!aiResult.success) {
+        // Graceful fallback — log clearly and continue with neutral values
+        console.error(
+          `[Worker] Job ${job.id}: AI analysis failed — falling back to placeholder values (matchScore: 0, missingKeywords: []).`
+        );
+        matchScore = 0;
+        missingKeywords = [];
+      } else {
+        console.log(
+          `[Worker] Job ${job.id}: AI analysis succeeded — matchScore: ${aiResult.data!.matchScore}, missingKeywords: [${aiResult.data!.missingKeywords.join(', ')}].`
+        );
+        matchScore = aiResult.data!.matchScore;
+        missingKeywords = aiResult.data!.missingKeywords;
+      }
+
+      // Persist the TailoredVersion with real (or fallback) AI values
       await prisma.tailoredVersion.create({
         data: {
           resumeId,
           jobDescriptionId,
-          matchScore: 0,
-          missingKeywords: [], // empty Json placeholder
-          tailoredText: "",    // empty placeholder
+          matchScore,
+          missingKeywords,
+          tailoredText: '', // Sprint 5 will populate this
         },
       });
 
