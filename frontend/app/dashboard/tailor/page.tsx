@@ -37,6 +37,10 @@ function TailorPageContent() {
   const [queueState, setQueueState] = useState("waiting");
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Completed-state analysis results
+  const [matchScore, setMatchScore] = useState<number | null>(null);
+  const [missingKeywords, setMissingKeywords] = useState<string[]>([]);
+
   // Cleanup polling on unmount
   useEffect(() => {
     return () => {
@@ -108,6 +112,13 @@ function TailorPageContent() {
 
         if (state === "completed") {
           if (pollingRef.current) clearInterval(pollingRef.current);
+          // Capture analysis results from the response
+          if (typeof json.data?.matchScore === "number") {
+            setMatchScore(json.data.matchScore);
+          }
+          if (Array.isArray(json.data?.missingKeywords)) {
+            setMissingKeywords(json.data.missingKeywords);
+          }
           setPageState("completed");
         } else if (state === "failed") {
           if (pollingRef.current) clearInterval(pollingRef.current);
@@ -312,7 +323,7 @@ function TailorPageContent() {
                 Your Tailored Resume is Ready
               </h1>
               <p className="text-ink-navy/60 text-sm max-w-md mx-auto">
-                The analysis is complete. Detailed results are coming in the next update.
+                Here&apos;s how your resume matches this job. Your tailored draft is coming in the next update.
               </p>
             </div>
 
@@ -320,23 +331,51 @@ function TailorPageContent() {
             <div className="w-full max-w-lg space-y-4">
               {/* Fit Score */}
               <div className="p-6 rounded-2xl bg-white border border-ink-navy/5 shadow-[0_2px_12px_rgb(0,0,0,0.03)]">
-                <h3 className="font-fraunces text-lg font-semibold text-ink-navy mb-1">Fit Score</h3>
-                <div className="flex items-center gap-3 mt-3">
-                  <div className="w-full h-3 rounded-full bg-ink-navy/5 overflow-hidden">
-                    <div className="h-full w-0 rounded-full bg-gradient-to-r from-amber to-emerald-400 transition-all" />
-                  </div>
-                  <span className="text-ink-navy/40 text-sm font-medium">—</span>
+                <div className="flex items-start justify-between mb-3">
+                  <h3 className="font-fraunces text-lg font-semibold text-ink-navy">Fit Score</h3>
+                  {matchScore !== null && (
+                    <span className="text-2xl font-bold text-ink-navy" style={{ fontVariantNumeric: "tabular-nums" }}>
+                      {matchScore}%
+                    </span>
+                  )}
                 </div>
-                <p className="text-ink-navy/40 text-xs mt-2">Coming in the next update</p>
+                <div className="w-full h-3 rounded-full bg-ink-navy/5 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-700 ease-out"
+                    style={{
+                      width: matchScore !== null ? `${matchScore}%` : "0%",
+                      backgroundColor: "#E8A33D",
+                    }}
+                  />
+                </div>
+                <p className="text-ink-navy/50 text-xs mt-2">
+                  {matchScore === null
+                    ? "Score unavailable"
+                    : matchScore >= 80
+                    ? "✦ Strong match"
+                    : matchScore >= 50
+                    ? "◎ Good match, some gaps"
+                    : "△ Needs significant tailoring"}
+                </p>
               </div>
 
               {/* Missing Keywords */}
               <div className="p-6 rounded-2xl bg-white border border-ink-navy/5 shadow-[0_2px_12px_rgb(0,0,0,0.03)]">
-                <h3 className="font-fraunces text-lg font-semibold text-ink-navy mb-1">Missing Keywords</h3>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  <span className="px-3 py-1 rounded-full bg-ink-navy/5 text-ink-navy/30 text-xs">Pending analysis…</span>
-                </div>
-                <p className="text-ink-navy/40 text-xs mt-2">Coming in the next update</p>
+                <h3 className="font-fraunces text-lg font-semibold text-ink-navy mb-3">Missing Keywords</h3>
+                {missingKeywords.length === 0 ? (
+                  <p className="text-emerald-600 text-sm font-medium">✓ No major gaps found!</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {missingKeywords.map((kw) => (
+                      <span
+                        key={kw}
+                        className="px-3 py-1 rounded-full bg-amber/10 text-ink-navy text-xs font-medium border border-amber/20"
+                      >
+                        {kw}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Tailored Draft */}
