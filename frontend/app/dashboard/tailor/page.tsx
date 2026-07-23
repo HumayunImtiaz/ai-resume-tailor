@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Briefcase, Building2, FileText, CheckCircle2, AlertTriangle, RotateCcw, Sparkles } from "lucide-react";
+import { ArrowLeft, Briefcase, Building2, FileText, CheckCircle2, AlertTriangle, RotateCcw, Sparkles, Copy, Check, Download } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import TailorProgress from "@/components/TailorProgress";
 
@@ -40,6 +40,8 @@ function TailorPageContent() {
   // Completed-state analysis results
   const [matchScore, setMatchScore] = useState<number | null>(null);
   const [missingKeywords, setMissingKeywords] = useState<string[]>([]);
+  const [tailoredText, setTailoredText] = useState<string>("");
+  const [isCopied, setIsCopied] = useState(false);
 
   // Cleanup polling on unmount
   useEffect(() => {
@@ -119,6 +121,9 @@ function TailorPageContent() {
           if (Array.isArray(json.data?.missingKeywords)) {
             setMissingKeywords(json.data.missingKeywords);
           }
+          if (typeof json.data?.tailoredText === "string") {
+            setTailoredText(json.data.tailoredText);
+          }
           setPageState("completed");
         } else if (state === "failed") {
           if (pollingRef.current) clearInterval(pollingRef.current);
@@ -136,6 +141,31 @@ function TailorPageContent() {
     setQueueJobId(null);
     setQueueState("waiting");
     setFormError("");
+  };
+
+  // --- Actions ---
+  const handleCopy = async () => {
+    try {
+      if (!tailoredText) return;
+      await navigator.clipboard.writeText(tailoredText);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy", err);
+    }
+  };
+
+  const handleDownload = () => {
+    if (!tailoredText) return;
+    const blob = new Blob([tailoredText], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "Tailored_Draft.txt";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   // --- Loading guard ---
@@ -323,7 +353,7 @@ function TailorPageContent() {
                 Your Tailored Resume is Ready
               </h1>
               <p className="text-ink-navy/60 text-sm max-w-md mx-auto">
-                Here&apos;s how your resume matches this job. Your tailored draft is coming in the next update.
+                Here&apos;s how your resume matches this job, along with your newly rewritten draft.
               </p>
             </div>
 
@@ -380,11 +410,38 @@ function TailorPageContent() {
 
               {/* Tailored Draft */}
               <div className="p-6 rounded-2xl bg-white border border-ink-navy/5 shadow-[0_2px_12px_rgb(0,0,0,0.03)]">
-                <h3 className="font-fraunces text-lg font-semibold text-ink-navy mb-1">Tailored Draft</h3>
-                <div className="mt-3 p-4 rounded-xl bg-ink-navy/[0.02] border border-dashed border-ink-navy/10 min-h-[80px] flex items-center justify-center">
-                  <p className="text-ink-navy/30 text-sm text-center">Your optimized resume text will appear here</p>
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="font-fraunces text-lg font-semibold text-ink-navy">Tailored Draft</h3>
+                  {tailoredText && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleCopy}
+                        className="p-1.5 rounded-md hover:bg-ink-navy/5 text-ink-navy/60 hover:text-ink-navy transition-colors flex items-center gap-1.5 text-xs font-medium"
+                        title="Copy to clipboard"
+                      >
+                        {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                        {isCopied ? <span className="text-emerald-600">Copied!</span> : "Copy"}
+                      </button>
+                      <button
+                        onClick={handleDownload}
+                        className="p-1.5 rounded-md hover:bg-ink-navy/5 text-ink-navy/60 hover:text-ink-navy transition-colors flex items-center gap-1.5 text-xs font-medium"
+                        title="Download as .txt"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        Download
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <p className="text-ink-navy/40 text-xs mt-2">Coming in the next update</p>
+                {tailoredText ? (
+                  <div className="mt-3 p-4 rounded-xl bg-ink-navy/[0.02] border border-ink-navy/10 max-h-[400px] overflow-y-auto whitespace-pre-wrap text-sm text-ink-navy/80 leading-relaxed">
+                    {tailoredText}
+                  </div>
+                ) : (
+                  <div className="mt-3 p-4 rounded-xl bg-ink-navy/[0.02] border border-dashed border-ink-navy/10 min-h-[80px] flex items-center justify-center">
+                    <p className="text-ink-navy/30 text-sm text-center">Your optimized resume text will appear here</p>
+                  </div>
+                )}
               </div>
             </div>
 
