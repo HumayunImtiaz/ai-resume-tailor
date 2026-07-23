@@ -6,12 +6,19 @@ export const analyzeMatch = async (resumeText: string, jobText: string) => {
     const groq = new Groq({ apiKey: env.groqApiKey });
 
     const systemPrompt = `You are an expert ATS (Applicant Tracking System) and resume-matching analyst.
-Your task is to compare the provided resume text with the job description.
+Your task is to compare the provided resume text with the job description and rewrite the resume for maximum impact.
+
+Rules for rewriting:
+1. Never invent experience, skills, employers, dates, or achievements that are not in the original resume.
+2. Only rephrase, reorder, and emphasize existing content using language and keywords from the job description.
+3. Preserve factual accuracy — this is a hard requirement, not a suggestion.
+
 You MUST respond with exactly a valid JSON object and nothing else. Avoid using markdown formatting (like \`\`\`json) or adding any conversational text.
 The JSON object must match this structure exactly:
 {
   "matchScore": <integer between 0 and 100 representing the match percentage>,
-  "missingKeywords": [<array of important skills or terms from the job description missing from the resume>]
+  "missingKeywords": [<array of important skills or terms from the job description missing from the resume>],
+  "tailoredText": "<the rewritten resume text, reframed using the job description's language, with no fabricated content>"
 }`;
 
     const userPrompt = `Job Description:
@@ -40,7 +47,7 @@ Analyze the match and provide the exact JSON response.`;
     const data = JSON.parse(rawJson);
 
     // Minor validation to ensure we got what we expect
-    if (typeof data.matchScore !== 'number' || !Array.isArray(data.missingKeywords)) {
+    if (typeof data.matchScore !== 'number' || !Array.isArray(data.missingKeywords) || typeof data.tailoredText !== 'string') {
       throw new Error('Invalid JSON structure returned by model');
     }
 
@@ -49,6 +56,7 @@ Analyze the match and provide the exact JSON response.`;
       data: {
         matchScore: data.matchScore,
         missingKeywords: data.missingKeywords,
+        tailoredText: data.tailoredText,
       },
     };
   } catch (error) {

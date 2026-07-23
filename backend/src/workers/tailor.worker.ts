@@ -30,6 +30,7 @@ export const initializeTailorWorker = () => {
 
       let matchScore: number;
       let missingKeywords: string[];
+      let tailoredText: string;
 
       if (!aiResult.success) {
         // Graceful fallback — log clearly and continue with neutral values
@@ -38,12 +39,14 @@ export const initializeTailorWorker = () => {
         );
         matchScore = 0;
         missingKeywords = [];
+        tailoredText = '';
       } else {
         console.log(
-          `[Worker] Job ${job.id}: AI analysis succeeded — matchScore: ${aiResult.data!.matchScore}, missingKeywords: [${aiResult.data!.missingKeywords.join(', ')}].`
+          `[Worker] Job ${job.id}: AI analysis succeeded — matchScore: ${aiResult.data!.matchScore}, missingKeywords: [${aiResult.data!.missingKeywords.join(', ')}], tailoredText: ${aiResult.data!.tailoredText?.length || 0} characters.`
         );
         matchScore = aiResult.data!.matchScore;
         missingKeywords = aiResult.data!.missingKeywords;
+        tailoredText = aiResult.data!.tailoredText || '';
       }
 
       // Persist the TailoredVersion with real (or fallback) AI values
@@ -53,7 +56,7 @@ export const initializeTailorWorker = () => {
           jobDescriptionId,
           matchScore,
           missingKeywords,
-          tailoredText: '', // Sprint 5 will populate this
+          tailoredText,
         },
       });
 
