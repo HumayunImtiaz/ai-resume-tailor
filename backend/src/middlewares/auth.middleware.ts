@@ -23,7 +23,7 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction): vo
     const payload = jwt.verify(token, env.jwtSecret) as { userId: string };
     req.userId = payload.userId;
     next();
-  } catch (error) {
+  } catch {
     sendResponse(res, 401, 'error', null, 'Unauthorized - Invalid token');
   }
 };
