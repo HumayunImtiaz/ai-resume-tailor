@@ -74,7 +74,7 @@ export const jobService = {
         const tailoredVersion = await prisma.tailoredVersion.findFirst({
           where: { resumeId, jobDescriptionId },
           orderBy: { createdAt: 'desc' },
-          select: { matchScore: true, missingKeywords: true },
+          select: { matchScore: true, missingKeywords: true, tailoredText: true },
         });
 
         if (tailoredVersion) {
@@ -84,6 +84,7 @@ export const jobService = {
               state,
               matchScore: tailoredVersion.matchScore,
               missingKeywords: tailoredVersion.missingKeywords,
+              tailoredText: tailoredVersion.tailoredText,
             },
           };
         }
