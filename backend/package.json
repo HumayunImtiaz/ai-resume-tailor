@@ -19,6 +19,7 @@
     "bcryptjs": "*",
     "bullmq": "*",
     "cors": "*",
+    "docx": "^9.7.1",
     "dotenv": "^17.4.2",
     "express": "*",
     "groq-sdk": "^1.3.0",
