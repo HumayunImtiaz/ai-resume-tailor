@@ -96,9 +96,36 @@ router.post('/', requireAuth, jobController.createJob);
  *                       items:
  *                         type: string
  *                       example: ["Kubernetes", "GraphQL"]
- *                     tailoredText:
- *                       type: string
- *                       description: The AI-rewritten resume text. Present only when state is "completed".
+ *                     tailoredResume:
+ *                       type: object
+ *                       description: The structured AI-rewritten resume. Present only when state is "completed".
+ *                       properties:
+ *                         fullName:
+ *                           type: string
+ *                         title:
+ *                           type: string
+ *                         summary:
+ *                           type: string
+ *                         skills:
+ *                           type: array
+ *                           items:
+ *                             type: string
+ *                         experience:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                         education:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                         projects:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                         certifications:
+ *                           type: array
+ *                           items:
+ *                             type: string
  *       401:
  *         description: Unauthorized
  *       404:

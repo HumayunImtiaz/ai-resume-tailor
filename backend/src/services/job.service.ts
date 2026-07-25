@@ -79,13 +79,20 @@ export const jobService = {
         });
 
         if (tailoredVersion) {
+          let tailoredResume = undefined;
+          try {
+            tailoredResume = JSON.parse(tailoredVersion.tailoredText);
+          } catch (e) {
+            // Ignored, fallback to undefined
+          }
+
           return {
             success: true as const,
             data: {
               state,
               matchScore: tailoredVersion.matchScore,
               missingKeywords: tailoredVersion.missingKeywords,
-              tailoredText: tailoredVersion.tailoredText,
+              tailoredResume,
             },
           };
         }
@@ -123,7 +130,17 @@ export const jobService = {
         return { success: false as const, error: 'Tailored resume not ready yet' };
       }
 
-      const result = await generateResumeDocx(tailoredVersion.tailoredText);
+      let parsedResume;
+      try {
+        parsedResume = JSON.parse(tailoredVersion.tailoredText);
+        if (!parsedResume || !parsedResume.fullName) {
+          return { success: false as const, error: 'Tailored resume not ready yet' };
+        }
+      } catch (e) {
+        return { success: false as const, error: 'Tailored resume format is invalid' };
+      }
+
+      const result = await generateResumeDocx(parsedResume);
       if (!result.success || !result.data) {
         return { success: false as const, error: 'Could not generate document' };
       }

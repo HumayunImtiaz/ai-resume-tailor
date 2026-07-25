@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Resume" ALTER COLUMN "links" DROP NOT NULL,
+ALTER COLUMN "links" DROP DEFAULT;

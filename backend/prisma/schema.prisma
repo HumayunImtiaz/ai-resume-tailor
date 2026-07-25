@@ -22,6 +22,7 @@ model Resume {
   userId           String
   originalFilename String
   rawText          String
+  links            Json?
   uploadedAt       DateTime          @default(now())
   user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   tailoredVersions TailoredVersion[]

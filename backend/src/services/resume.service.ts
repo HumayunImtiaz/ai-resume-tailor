@@ -2,16 +2,39 @@ import { PDFParse } from 'pdf-parse';
 import mammoth from 'mammoth';
 import prisma from '../config/database';
 
+interface ResumeLink {
+  text: string;
+  url: string;
+}
+
+const extractLinksFromHtml = (html: string): ResumeLink[] => {
+  const links: ResumeLink[] = [];
+  const anchorRegex = /<a\s+(?:[^>]*?\s+)?href="([^"]+)"[^>]*>([^<]+)<\/a>/gi;
+  let match;
+  while ((match = anchorRegex.exec(html)) !== null) {
+    const url = match[1].trim();
+    const text = match[2].trim();
+    if (url && text) {
+      links.push({ text, url });
+    }
+  }
+  return links;
+};
+
 export const resumeService = {
   extractText: async (mimetype: string, buffer: Buffer) => {
     try {
       if (mimetype === 'application/pdf') {
         const parser = new PDFParse({ data: buffer });
         const result = await parser.getText();
-        return { success: true as const, text: result.text };
+        return { success: true as const, text: result.text, links: [] as ResumeLink[] };
       } else if (mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-        const data = await mammoth.extractRawText({ buffer });
-        return { success: true as const, text: data.value };
+        // Extract plain text for AI analysis
+        const textData = await mammoth.extractRawText({ buffer });
+        // Extract HTML to capture hyperlinks
+        const htmlData = await mammoth.convertToHtml({ buffer });
+        const links = extractLinksFromHtml(htmlData.value);
+        return { success: true as const, text: textData.value, links };
       }
       return { success: false as const, error: 'Only PDF and DOCX files are supported' };
     } catch (error) {
@@ -32,7 +55,8 @@ export const resumeService = {
         data: {
           userId,
           originalFilename: file.originalname,
-          rawText: extractionResult.text
+          rawText: extractionResult.text,
+          links: extractionResult.links as any,
         },
         select: {
           id: true,
