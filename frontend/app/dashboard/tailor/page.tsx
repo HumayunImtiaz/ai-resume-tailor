@@ -35,6 +35,7 @@ function TailorPageContent() {
   const [pageState, setPageState] = useState<PageState>("form");
   const [queueJobId, setQueueJobId] = useState<string | null>(null);
   const [queueState, setQueueState] = useState("waiting");
+  const [jobDescId, setJobDescId] = useState<string | null>(null);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Completed-state analysis results
@@ -82,6 +83,7 @@ function TailorPageContent() {
       });
       const json = await res.json();
       const jobId = json.data?.queueJobId;
+      const descId = json.data?.jobDescription?.id;
 
       if (!jobId) {
         setFormError("Unexpected response — no job ID returned.");
@@ -90,6 +92,7 @@ function TailorPageContent() {
       }
 
       setQueueJobId(jobId);
+      if (descId) setJobDescId(descId);
       setPageState("processing");
       startPolling(jobId);
     } catch (err: any) {
@@ -135,10 +138,10 @@ function TailorPageContent() {
     }, 1500);
   }, []);
 
-  // --- Retry after failure ---
   const handleRetry = () => {
     setPageState("form");
     setQueueJobId(null);
+    setJobDescId(null);
     setQueueState("waiting");
     setFormError("");
   };
@@ -166,6 +169,41 @@ function TailorPageContent() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  };
+
+  const [isDownloadingDocx, setIsDownloadingDocx] = useState(false);
+  const [downloadError, setDownloadError] = useState("");
+
+  const handleDownloadDocx = async () => {
+    if (!jobDescId) return;
+    setIsDownloadingDocx(true);
+    setDownloadError("");
+
+    try {
+      const response = await apiFetch(`/api/jobs/${jobDescId}/download`);
+      if (!response.ok) {
+        let errorMsg = "Failed to download";
+        try {
+          const errData = await response.json();
+          if (errData.message) errorMsg = errData.message;
+        } catch (_) {}
+        throw new Error(errorMsg);
+      }
+      
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "Tailored_Draft.docx";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      setDownloadError(err.message || "Failed to download");
+    } finally {
+      setIsDownloadingDocx(false);
+    }
   };
 
   // --- Loading guard ---
@@ -413,7 +451,7 @@ function TailorPageContent() {
                 <div className="flex items-center justify-between mb-1">
                   <h3 className="font-fraunces text-lg font-semibold text-ink-navy">Tailored Draft</h3>
                   {tailoredText && (
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 relative">
                       <button
                         onClick={handleCopy}
                         className="p-1.5 rounded-md hover:bg-ink-navy/5 text-ink-navy/60 hover:text-ink-navy transition-colors flex items-center gap-1.5 text-xs font-medium"
@@ -428,8 +466,29 @@ function TailorPageContent() {
                         title="Download as .txt"
                       >
                         <Download className="w-3.5 h-3.5" />
-                        Download
+                        .txt
                       </button>
+                      <button
+                        onClick={handleDownloadDocx}
+                        disabled={isDownloadingDocx}
+                        className="p-1.5 rounded-md hover:bg-ink-navy/5 text-ink-navy/60 hover:text-ink-navy transition-colors flex items-center gap-1.5 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Download as .docx"
+                      >
+                        {isDownloadingDocx ? (
+                          <svg className="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                        ) : (
+                          <Download className="w-3.5 h-3.5" />
+                        )}
+                        .docx
+                      </button>
+                      {downloadError && (
+                        <span className="absolute -bottom-8 right-0 text-red-500 text-[10px] whitespace-nowrap bg-white px-2 py-1 rounded shadow-sm border border-red-100 z-10">
+                          {downloadError}
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
