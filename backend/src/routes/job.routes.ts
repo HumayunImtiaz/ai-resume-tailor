@@ -108,4 +108,34 @@ router.post('/', requireAuth, jobController.createJob);
  */
 router.get('/status/:jobId', requireAuth, jobController.getJobStatus);
 
+/**
+ * @swagger
+ * /api/jobs/{jobDescriptionId}/download:
+ *   get:
+ *     summary: Download the tailored resume as a DOCX file
+ *     tags: [Jobs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: jobDescriptionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the job description
+ *     responses:
+ *       200:
+ *         description: The tailored resume DOCX file
+ *         content:
+ *           application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       404:
+ *         description: Job not found or tailored resume not ready yet
+ *       500:
+ *         description: Server error or document generation failed
+ */
+router.get('/:jobDescriptionId/download', requireAuth, jobController.downloadTailoredDocx);
+
 export default router;

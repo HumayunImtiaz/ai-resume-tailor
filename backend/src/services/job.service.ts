@@ -1,6 +1,7 @@
 import prisma from '../config/database';
 import { addTailorJob } from '../queues/tailor.queue';
 import { tailorQueue } from '../queues/tailor.queue';
+import { generateResumeDocx } from './docx.service';
 
 interface CreateJobInput {
   resumeId: string;
@@ -99,6 +100,37 @@ export const jobService = {
       };
     } catch (error) {
       console.error('Get job status error:', error);
+      return { success: false as const, error: 'Something went wrong, please try again' };
+    }
+  },
+
+  getTailoredDocx: async (userId: string, jobDescriptionId: string) => {
+    try {
+      const jobDescription = await prisma.jobDescription.findFirst({
+        where: { id: jobDescriptionId, userId },
+      });
+
+      if (!jobDescription) {
+        return { success: false as const, error: 'Job not found' };
+      }
+
+      const tailoredVersion = await prisma.tailoredVersion.findFirst({
+        where: { jobDescriptionId },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (!tailoredVersion || !tailoredVersion.tailoredText) {
+        return { success: false as const, error: 'Tailored resume not ready yet' };
+      }
+
+      const result = await generateResumeDocx(tailoredVersion.tailoredText);
+      if (!result.success || !result.data) {
+        return { success: false as const, error: 'Could not generate document' };
+      }
+
+      return { success: true as const, data: result.data };
+    } catch (error) {
+      console.error('Get tailored docx error:', error);
       return { success: false as const, error: 'Something went wrong, please try again' };
     }
   },
