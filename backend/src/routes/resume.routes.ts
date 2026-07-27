@@ -102,4 +102,31 @@ router.get('/', requireAuth, resumeController.listResumes);
  */
 router.delete('/:id', requireAuth, resumeController.deleteResume);
 
+/**
+ * @swagger
+ * /api/resumes/{id}/versions:
+ *   get:
+ *     summary: List all tailored versions for a resume
+ *     tags: [Resumes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Resume ID
+ *     responses:
+ *       200:
+ *         description: Tailored versions retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Resume not found
+ *       500:
+ *         description: Server error
+ */
+router.get('/:id/versions', requireAuth, resumeController.listTailoredVersions);
+
 export default router;

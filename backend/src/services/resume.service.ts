@@ -109,5 +109,39 @@ export const resumeService = {
       console.error('Delete resume error:', error);
       return { success: false as const, error: 'Something went wrong, please try again' };
     }
+  },
+
+  listTailoredVersions: async (userId: string, resumeId: string) => {
+    try {
+      const resume = await prisma.resume.findFirst({
+        where: { id: resumeId, userId }
+      });
+
+      if (!resume) {
+        return { success: false as const, error: 'Resume not found' };
+      }
+
+      const versions = await prisma.tailoredVersion.findMany({
+        where: { resumeId },
+        select: {
+          id: true,
+          matchScore: true,
+          createdAt: true,
+          jobDescription: {
+            select: {
+              id: true,
+              title: true,
+              company: true
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      return { success: true as const, data: versions };
+    } catch (error) {
+      console.error('List tailored versions error:', error);
+      return { success: false as const, error: 'Something went wrong, please try again' };
+    }
   }
 };

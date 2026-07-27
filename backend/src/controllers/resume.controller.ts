@@ -56,5 +56,23 @@ export const resumeController = {
     }
 
     sendResponse(res, 200, 'success', null, 'Resume deleted successfully');
+  }) as RequestHandler,
+
+  listTailoredVersions: (async (req: Request, res: Response) => {
+    const userId = req.userId as string;
+    const resumeId = req.params.id as string;
+
+    const result = await resumeService.listTailoredVersions(userId, resumeId);
+
+    if (!result.success) {
+      if (result.error === 'Resume not found') {
+        sendResponse(res, 404, 'error', null, result.error as string);
+      } else {
+        sendResponse(res, 500, 'error', null, result.error as string);
+      }
+      return;
+    }
+
+    sendResponse(res, 200, 'success', result.data, 'Tailored versions retrieved successfully');
   }) as RequestHandler
 };
