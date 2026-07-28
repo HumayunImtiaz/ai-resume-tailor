@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useRef, useState } from "react";
-import { Upload } from "lucide-react";
+import { UploadCloud, CheckCircle2, AlertCircle } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 
 const ACCEPTED_TYPES = [
@@ -51,11 +51,13 @@ export default function ResumeUploader({ onUploadSuccess }: ResumeUploaderProps)
         const json = await res.json();
         setFeedback({ type: "success", message: json.message || "Resume uploaded successfully!" });
         onUploadSuccess();
+        
+        // Hide success message after 3 seconds
+        setTimeout(() => setFeedback(null), 3000);
       } catch (err: any) {
         setFeedback({ type: "error", message: err.message || "Upload failed. Please try again." });
       } finally {
         setIsUploading(false);
-        // Reset the file input so the same file can be re-selected
         if (inputRef.current) inputRef.current.value = "";
       }
     },
@@ -88,7 +90,12 @@ export default function ResumeUploader({ onUploadSuccess }: ResumeUploaderProps)
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full h-full flex flex-col items-center justify-center relative p-8">
+      {/* Background glow when dragging */}
+      {isDragging && (
+        <div className="absolute inset-0 bg-amber/5 rounded-[28px] blur-2xl transition-all duration-300 pointer-events-none" />
+      )}
+
       <div
         role="button"
         tabIndex={0}
@@ -98,69 +105,59 @@ export default function ResumeUploader({ onUploadSuccess }: ResumeUploaderProps)
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         className={`
-          relative w-full rounded-2xl border-2 border-dashed cursor-pointer
-          transition-all duration-200 group
+          relative z-10 w-full min-h-[300px] flex flex-col items-center justify-center p-8 text-center cursor-pointer 
+          rounded-[28px] transition-all duration-300 h-full
           ${isDragging
-            ? "border-amber bg-amber/10 scale-[1.01]"
-            : "border-ink-navy/20 hover:border-amber/60 hover:bg-amber/5"
+            ? "border-[2px] border-amber bg-amber/5 shadow-inner scale-[0.98]"
+            : "border-[2px] border-dashed border-gray-200 hover:border-amber/50 hover:bg-gray-50/50 bg-white"
           }
           ${isUploading ? "pointer-events-none opacity-60" : ""}
         `}
       >
-        <div className="flex flex-col items-center justify-center py-12 px-6">
-          {isUploading ? (
-            <>
-              <svg
-                className="animate-spin h-10 w-10 text-amber mb-4"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="#14213D" strokeWidth="4" />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
-              <p className="text-ink-navy/70 font-medium">Uploading your resume…</p>
-            </>
-          ) : (
-            <>
-              <div className="w-14 h-14 rounded-xl bg-ink-navy/5 flex items-center justify-center mb-4 group-hover:bg-amber/10 transition-colors">
-                <Upload className="w-6 h-6 text-ink-navy/50 group-hover:text-amber transition-colors" />
-              </div>
-              <p className="text-ink-navy font-medium mb-1">
-                Drag and drop your resume, or{" "}
-                <span className="text-amber underline underline-offset-2">click to browse</span>
-              </p>
-              <p className="text-ink-navy/50 text-sm">PDF or DOCX, up to 5 MB</p>
-            </>
-          )}
-        </div>
-
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".pdf,.docx"
-          onChange={handleFileSelect}
-          className="hidden"
-          aria-label="Upload resume"
-        />
+        {isUploading ? (
+          <div className="flex flex-col items-center">
+             <div className="relative w-16 h-16 mb-4">
+                 <div className="absolute inset-x-1 inset-y-1 rounded-full border border-amber/30 bg-amber/10 animate-pulse" />
+                 <div className="absolute inset-0 rounded-full border-4 border-amber border-t-transparent animate-[spin_1s_ease-in-out_infinite]" />
+             </div>
+             <p className="font-semibold text-lg text-ink-navy tracking-tight">Processing Document</p>
+             <p className="text-sm text-gray-500 mt-1">Applying AI extraction...</p>
+          </div>
+        ) : (
+          <>
+            <div className={`p-4 rounded-[20px] mb-6 transition-colors shadow-xl ${isDragging ? "bg-amber text-white shadow-amber/30" : "bg-white text-gray-400 border border-gray-100 shadow-black/5"}`}>
+               <UploadCloud className="w-8 h-8" />
+            </div>
+            <p className="font-semibold text-lg text-ink-navy mb-2">
+              Browse Files <span className="font-normal text-gray-400">or drop here</span>
+            </p>
+            <p className="text-sm text-gray-500 max-w-xs px-4 bg-gray-50 py-1.5 rounded-full border border-gray-100">
+              PDF, DOCX up to 5MB
+            </p>
+          </>
+        )}
       </div>
 
-      {/* Feedback message */}
-      {feedback && (
-        <div
-          className={`mt-4 p-4 rounded-lg text-sm font-medium transition-all ${
-            feedback.type === "success"
-              ? "bg-emerald-50 border border-emerald-200 text-emerald-700"
-              : "bg-red-50 border border-red-100 text-red-600"
-          }`}
-        >
-          {feedback.message}
-        </div>
-      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".pdf,.docx"
+        onChange={handleFileSelect}
+        className="hidden"
+        aria-label="Upload resume"
+      />
+
+      {/* Modern Floating Feedback Alert */}
+      <div className={`
+        absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 px-5 py-3 rounded-full text-sm font-semibold shadow-xl transition-all duration-500 z-50 backdrop-blur-xl border
+        ${feedback ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8 pointer-events-none"}
+        ${feedback?.type === "success" 
+            ? "bg-white/90 border-emerald-200 text-emerald-600 shadow-[0_10px_40px_rgba(16,185,129,0.15)]" 
+            : "bg-white/90 border-red-200 text-red-600 shadow-[0_10px_40px_rgba(239,68,68,0.15)]"}
+      `}>
+        {feedback?.type === "success" ? <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" /> : <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />}
+        <span>{feedback?.message}</span>
+      </div>
     </div>
   );
 }
