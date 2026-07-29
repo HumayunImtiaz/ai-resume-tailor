@@ -520,3 +520,66 @@ in the downloaded .docx (not plain text). Also compacted to one page:
 sections match a real resume layout (summary, skills, experience with
 bullets, education, projects, certifications), and GitHub/LinkedIn/
 Portfolio links are live, clickable hyperlinks pointing to the correct URLs.
+
+---
+
+## Sprint 7 — Dashboard UI Polish: Tailored Version History
+
+Before this sprint, a tailored result was only visible immediately after
+processing — leaving the dashboard lost access to it entirely. This sprint
+adds persistent history so past results can be revisited anytime.
+
+```
+GET /api/resumes/:id/versions   (list, lightweight)
+   │
+Ownership check (resume belongs to userId)
+   │
+Prisma: find TailoredVersion WHERE resumeId, include JobDescription
+(title, company), order by createdAt desc
+   │
+Returns [{ id, matchScore, createdAt, jobDescription: {id, title, company} }]
+— deliberately excludes tailoredText/missingKeywords to keep the list light
+
+---
+
+GET /api/jobs/versions/:id       (single version, full detail)
+   │
+Find TailoredVersion by id, ownership check via its related Resume.userId
+   │
+JSON.parse(tailoredText) → structured tailoredResume object
+   │
+Returns { id, matchScore, missingKeywords, tailoredResume,
+jobDescription, createdAt } — same shape the live-processing flow uses
+
+---
+
+Frontend:
+Dashboard resume card → "View past tailored versions (N)" toggle →
+expands to show match-score badge + job title/company + date per version
+→ "View" navigates to /dashboard/tailor/result/:versionId
+   │
+That page fetches GET /api/jobs/versions/:versionId and renders through
+the SAME shared TailoredResult component used by the live tailoring flow
+(Sprints 4-6) — one rendering path for both "just processed" and
+"revisited from history" results, not two parallel implementations
+```
+
+**Key decisions:**
+- The list endpoint and the detail endpoint are deliberately split — list
+  stays cheap (no large text fields) for a dashboard that may show many
+  resumes each with many versions, while detail is fetched only when a
+  specific version is opened.
+- Both endpoints layer their ownership check through the same pattern
+  used everywhere else in the app: a resume/version is only visible if it
+  traces back to the requesting user, checked in the service layer before
+  any data is returned.
+- Rather than duplicate the Fit Score / Missing Keywords / Tailored Draft
+  UI between the live-processing page and this new saved-version page,
+  both were unified behind one shared component — a result looks
+  identical whether it just finished processing or was reopened from
+  history days later.
+
+**Status:** Sprint 7 — **Complete**. Verified end-to-end: dashboard shows
+version history per resume, opening a past version renders the full
+result (score, keywords, structured resume, working copy/download)
+identically to a freshly completed job.
