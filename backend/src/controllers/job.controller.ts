@@ -64,4 +64,22 @@ export const jobController = {
       res.send(result.data);
     }
   }) as RequestHandler,
+
+  getTailoredVersionDetail: (async (req: Request, res: Response) => {
+    const userId = req.userId as string;
+    const tailoredVersionId = req.params.id as string;
+
+    const result = await jobService.getTailoredVersionDetail(userId, tailoredVersionId);
+
+    if (!result.success) {
+      if (result.error === 'Tailored version not found') {
+        sendResponse(res, 404, 'error', null, result.error);
+      } else {
+        sendResponse(res, 500, 'error', null, result.error);
+      }
+      return;
+    }
+
+    sendResponse(res, 200, 'success', result.data, 'Tailored version detail retrieved successfully');
+  }) as RequestHandler,
 };

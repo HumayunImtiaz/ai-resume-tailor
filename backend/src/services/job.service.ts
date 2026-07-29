@@ -151,4 +151,48 @@ export const jobService = {
       return { success: false as const, error: 'Something went wrong, please try again' };
     }
   },
+
+  getTailoredVersionDetail: async (userId: string, tailoredVersionId: string) => {
+    try {
+      const tailoredVersion = await prisma.tailoredVersion.findUnique({
+        where: { id: tailoredVersionId },
+        include: {
+          resume: true,
+          jobDescription: {
+            select: {
+              id: true,
+              title: true,
+              company: true,
+            },
+          },
+        },
+      });
+
+      if (!tailoredVersion || tailoredVersion.resume.userId !== userId) {
+        return { success: false as const, error: 'Tailored version not found' };
+      }
+
+      let tailoredResume;
+      try {
+        tailoredResume = JSON.parse(tailoredVersion.tailoredText);
+      } catch (e) {
+        // Ignored, fallback to undefined
+      }
+
+      return {
+        success: true as const,
+        data: {
+          id: tailoredVersion.id,
+          matchScore: tailoredVersion.matchScore,
+          missingKeywords: tailoredVersion.missingKeywords,
+          tailoredResume,
+          jobDescription: tailoredVersion.jobDescription,
+          createdAt: tailoredVersion.createdAt,
+        },
+      };
+    } catch (error) {
+      console.error('Get tailored version detail error:', error);
+      return { success: false as const, error: 'Something went wrong, please try again' };
+    }
+  },
 };

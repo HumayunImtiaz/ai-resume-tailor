@@ -165,4 +165,64 @@ router.get('/status/:jobId', requireAuth, jobController.getJobStatus);
  */
 router.get('/:jobDescriptionId/download', requireAuth, jobController.downloadTailoredDocx);
 
+/**
+ * @swagger
+ * /api/jobs/versions/{id}:
+ *   get:
+ *     summary: Get full details of a specific tailored version
+ *     tags: [Jobs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the tailored version
+ *     responses:
+ *       200:
+ *         description: Tailored version details retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     matchScore:
+ *                       type: integer
+ *                     missingKeywords:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     tailoredResume:
+ *                       type: object
+ *                     jobDescription:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         title:
+ *                           type: string
+ *                         company:
+ *                           type: string
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Tailored version not found
+ *       500:
+ *         description: Server error
+ */
+router.get('/versions/:id', requireAuth, jobController.getTailoredVersionDetail);
+
 export default router;
