@@ -2,9 +2,10 @@
 
 import React, { useCallback, useEffect, useRef, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Briefcase, Building2, FileText, CheckCircle2, AlertTriangle, RotateCcw, Sparkles, Copy, Check, Download } from "lucide-react";
+import { ArrowLeft, Briefcase, Building2, FileText, CheckCircle2, AlertTriangle, RotateCcw, Sparkles } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import TailorProgress from "@/components/TailorProgress";
+import TailoredResult from "@/components/TailoredResult";
 
 type PageState = "form" | "processing" | "completed" | "failed";
 
@@ -41,8 +42,7 @@ function TailorPageContent() {
   // Completed-state analysis results
   const [matchScore, setMatchScore] = useState<number | null>(null);
   const [missingKeywords, setMissingKeywords] = useState<string[]>([]);
-  const [tailoredText, setTailoredText] = useState<string>("");
-  const [isCopied, setIsCopied] = useState(false);
+  const [tailoredResume, setTailoredResume] = useState<any>(null);
 
   // Cleanup polling on unmount
   useEffect(() => {
@@ -124,8 +124,8 @@ function TailorPageContent() {
           if (Array.isArray(json.data?.missingKeywords)) {
             setMissingKeywords(json.data.missingKeywords);
           }
-          if (typeof json.data?.tailoredText === "string") {
-            setTailoredText(json.data.tailoredText);
+          if (json.data?.tailoredResume) {
+            setTailoredResume(json.data.tailoredResume);
           }
           setPageState("completed");
         } else if (state === "failed") {
@@ -146,65 +146,7 @@ function TailorPageContent() {
     setFormError("");
   };
 
-  // --- Actions ---
-  const handleCopy = async () => {
-    try {
-      if (!tailoredText) return;
-      await navigator.clipboard.writeText(tailoredText);
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy", err);
-    }
-  };
 
-  const handleDownload = () => {
-    if (!tailoredText) return;
-    const blob = new Blob([tailoredText], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "Tailored_Draft.txt";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  const [isDownloadingDocx, setIsDownloadingDocx] = useState(false);
-  const [downloadError, setDownloadError] = useState("");
-
-  const handleDownloadDocx = async () => {
-    if (!jobDescId) return;
-    setIsDownloadingDocx(true);
-    setDownloadError("");
-
-    try {
-      const response = await apiFetch(`/api/jobs/${jobDescId}/download`);
-      if (!response.ok) {
-        let errorMsg = "Failed to download";
-        try {
-          const errData = await response.json();
-          if (errData.message) errorMsg = errData.message;
-        } catch (_) {}
-        throw new Error(errorMsg);
-      }
-      
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "Tailored_Draft.docx";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (err: any) {
-      setDownloadError(err.message || "Failed to download");
-    } finally {
-      setIsDownloadingDocx(false);
-    }
-  };
 
   // --- Loading guard ---
   if (isChecking) {
@@ -395,114 +337,12 @@ function TailorPageContent() {
               </p>
             </div>
 
-            {/* Placeholder result cards */}
-            <div className="w-full max-w-lg space-y-4">
-              {/* Fit Score */}
-              <div className="p-6 rounded-2xl bg-white border border-ink-navy/5 shadow-[0_2px_12px_rgb(0,0,0,0.03)]">
-                <div className="flex items-start justify-between mb-3">
-                  <h3 className="font-fraunces text-lg font-semibold text-ink-navy">Fit Score</h3>
-                  {matchScore !== null && (
-                    <span className="text-2xl font-bold text-ink-navy" style={{ fontVariantNumeric: "tabular-nums" }}>
-                      {matchScore}%
-                    </span>
-                  )}
-                </div>
-                <div className="w-full h-3 rounded-full bg-ink-navy/5 overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-700 ease-out"
-                    style={{
-                      width: matchScore !== null ? `${matchScore}%` : "0%",
-                      backgroundColor: "#E8A33D",
-                    }}
-                  />
-                </div>
-                <p className="text-ink-navy/50 text-xs mt-2">
-                  {matchScore === null
-                    ? "Score unavailable"
-                    : matchScore >= 80
-                    ? "✦ Strong match"
-                    : matchScore >= 50
-                    ? "◎ Good match, some gaps"
-                    : "△ Needs significant tailoring"}
-                </p>
-              </div>
-
-              {/* Missing Keywords */}
-              <div className="p-6 rounded-2xl bg-white border border-ink-navy/5 shadow-[0_2px_12px_rgb(0,0,0,0.03)]">
-                <h3 className="font-fraunces text-lg font-semibold text-ink-navy mb-3">Missing Keywords</h3>
-                {missingKeywords.length === 0 ? (
-                  <p className="text-emerald-600 text-sm font-medium">✓ No major gaps found!</p>
-                ) : (
-                  <div className="flex flex-wrap gap-2">
-                    {missingKeywords.map((kw) => (
-                      <span
-                        key={kw}
-                        className="px-3 py-1 rounded-full bg-amber/10 text-ink-navy text-xs font-medium border border-amber/20"
-                      >
-                        {kw}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Tailored Draft */}
-              <div className="p-6 rounded-2xl bg-white border border-ink-navy/5 shadow-[0_2px_12px_rgb(0,0,0,0.03)]">
-                <div className="flex items-center justify-between mb-1">
-                  <h3 className="font-fraunces text-lg font-semibold text-ink-navy">Tailored Draft</h3>
-                  {tailoredText && (
-                    <div className="flex gap-2 relative">
-                      <button
-                        onClick={handleCopy}
-                        className="p-1.5 rounded-md hover:bg-ink-navy/5 text-ink-navy/60 hover:text-ink-navy transition-colors flex items-center gap-1.5 text-xs font-medium"
-                        title="Copy to clipboard"
-                      >
-                        {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-                        {isCopied ? <span className="text-emerald-600">Copied!</span> : "Copy"}
-                      </button>
-                      <button
-                        onClick={handleDownload}
-                        className="p-1.5 rounded-md hover:bg-ink-navy/5 text-ink-navy/60 hover:text-ink-navy transition-colors flex items-center gap-1.5 text-xs font-medium"
-                        title="Download as .txt"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                        .txt
-                      </button>
-                      <button
-                        onClick={handleDownloadDocx}
-                        disabled={isDownloadingDocx}
-                        className="p-1.5 rounded-md hover:bg-ink-navy/5 text-ink-navy/60 hover:text-ink-navy transition-colors flex items-center gap-1.5 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Download as .docx"
-                      >
-                        {isDownloadingDocx ? (
-                          <svg className="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                          </svg>
-                        ) : (
-                          <Download className="w-3.5 h-3.5" />
-                        )}
-                        .docx
-                      </button>
-                      {downloadError && (
-                        <span className="absolute -bottom-8 right-0 text-red-500 text-[10px] whitespace-nowrap bg-white px-2 py-1 rounded shadow-sm border border-red-100 z-10">
-                          {downloadError}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-                {tailoredText ? (
-                  <div className="mt-3 p-4 rounded-xl bg-ink-navy/[0.02] border border-ink-navy/10 max-h-[400px] overflow-y-auto whitespace-pre-wrap text-sm text-ink-navy/80 leading-relaxed">
-                    {tailoredText}
-                  </div>
-                ) : (
-                  <div className="mt-3 p-4 rounded-xl bg-ink-navy/[0.02] border border-dashed border-ink-navy/10 min-h-[80px] flex items-center justify-center">
-                    <p className="text-ink-navy/30 text-sm text-center">Your optimized resume text will appear here</p>
-                  </div>
-                )}
-              </div>
-            </div>
+            <TailoredResult
+              matchScore={matchScore}
+              missingKeywords={missingKeywords}
+              tailoredResume={tailoredResume}
+              jobDescriptionId={jobDescId}
+            />
 
             {/* Actions */}
             <div className="flex gap-3 mt-8">
