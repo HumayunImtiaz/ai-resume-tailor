@@ -28,7 +28,6 @@ export default function DashboardPage() {
   const [title, setTitle] = useState("");
   const [company, setCompany] = useState("");
   const [rawText, setRawText] = useState("");
-  const [coverLetterText, setCoverLetterText] = useState("");
   const [formError, setFormError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -41,7 +40,9 @@ export default function DashboardPage() {
 
   // Completed results
   const [matchScore, setMatchScore] = useState<number | null>(null);
-  const [missingKeywords, setMissingKeywords] = useState<string[]>([]);
+  const [matchedSkills, setMatchedSkills] = useState<string[]>([]);
+  const [missingSkills, setMissingSkills] = useState<any[]>([]);
+  const [atsAnalysis, setAtsAnalysis] = useState<any>(null);
   const [tailoredResume, setTailoredResume] = useState<any>(null);
 
   // Cleanup polling on unmount
@@ -68,8 +69,14 @@ export default function DashboardPage() {
             if (typeof json.data?.matchScore === "number") {
               setMatchScore(json.data.matchScore);
             }
-            if (Array.isArray(json.data?.missingKeywords)) {
-              setMissingKeywords(json.data.missingKeywords);
+            if (Array.isArray(json.data?.matchedSkills)) {
+              setMatchedSkills(json.data.matchedSkills);
+            }
+            if (Array.isArray(json.data?.missingSkills)) {
+              setMissingSkills(json.data.missingSkills);
+            }
+            if (json.data?.atsAnalysis) {
+              setAtsAnalysis(json.data.atsAnalysis);
             }
             if (json.data?.tailoredResume) {
               setTailoredResume(json.data.tailoredResume);
@@ -116,7 +123,6 @@ export default function DashboardPage() {
           title: title.trim(),
           company: company.trim() || undefined,
           rawText,
-          coverLetterText: coverLetterText.trim() || undefined,
         }),
       });
       const json = await res.json();
@@ -144,13 +150,14 @@ export default function DashboardPage() {
     setTitle("");
     setCompany("");
     setRawText("");
-    setCoverLetterText("");
     setFormError("");
     setQueueJobId(null);
     setJobDescId(null);
     setQueueState("waiting");
     setMatchScore(null);
-    setMissingKeywords([]);
+    setMatchedSkills([]);
+    setMissingSkills([]);
+    setAtsAnalysis(null);
     setTailoredResume(null);
     setPageState("form");
   };
@@ -267,23 +274,6 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Cover Letter Textarea (optional) */}
-            <div>
-              <label htmlFor="cover-letter-text" className="block text-ink-navy font-semibold text-sm mb-1.5">
-                Cover Letter for this Job <span className="text-ink-navy/40 font-normal">(optional)</span>
-              </label>
-              <textarea
-                id="cover-letter-text"
-                value={coverLetterText}
-                onChange={(e) => setCoverLetterText(e.target.value)}
-                placeholder="Paste an optional cover letter — helps us find more relevant experience to highlight..."
-                rows={5}
-                className="w-full px-4 py-3 rounded-xl border border-ink-navy/15 bg-white text-ink-navy text-sm placeholder:text-ink-navy/30 focus:outline-none focus:ring-2 focus:ring-amber focus:border-transparent transition-shadow resize-y min-h-[110px]"
-              />
-              <p className="text-xs text-ink-navy/40 mt-1.5">
-                Optional — helps us find more relevant experience to highlight in your tailored resume.
-              </p>
-            </div>
 
             {/* Form Error */}
             {formError && (
@@ -349,7 +339,9 @@ export default function DashboardPage() {
 
           <TailoredResult
             matchScore={matchScore}
-            missingKeywords={missingKeywords}
+            matchedSkills={matchedSkills}
+            missingSkills={missingSkills}
+            atsAnalysis={atsAnalysis}
             tailoredResume={tailoredResume}
             jobDescriptionId={jobDescId}
           />

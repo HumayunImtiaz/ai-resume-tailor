@@ -90,12 +90,38 @@ router.post('/', requireAuth, jobController.createJob);
  *                       type: integer
  *                       description: AI-computed match percentage (0–100). Present only when state is "completed".
  *                       example: 78
- *                     missingKeywords:
+ *                     matchedSkills:
  *                       type: array
- *                       description: Keywords from the job description missing in the resume. Present only when state is "completed".
+ *                       description: Skills from the JD found in the resume. Present only when state is "completed".
  *                       items:
  *                         type: string
- *                       example: ["Kubernetes", "GraphQL"]
+ *                       example: ["React", "Node.js"]
+ *                     missingSkills:
+ *                       type: array
+ *                       description: Skills from the JD missing from the resume with reasons. Present only when state is "completed".
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           skill:
+ *                             type: string
+ *                           reason:
+ *                             type: string
+ *                     atsAnalysis:
+ *                       type: object
+ *                       description: ATS analysis with strengths, gaps, and recommendations. Present only when state is "completed".
+ *                       properties:
+ *                         strengths:
+ *                           type: array
+ *                           items:
+ *                             type: string
+ *                         gaps:
+ *                           type: array
+ *                           items:
+ *                             type: string
+ *                         recommendations:
+ *                           type: array
+ *                           items:
+ *                             type: string
  *                     tailoredResume:
  *                       type: object
  *                       description: The structured AI-rewritten resume. Present only when state is "completed".
@@ -198,10 +224,16 @@ router.get('/:jobDescriptionId/download', requireAuth, jobController.downloadTai
  *                       type: string
  *                     matchScore:
  *                       type: integer
- *                     missingKeywords:
+ *                     matchedSkills:
  *                       type: array
  *                       items:
  *                         type: string
+ *                     missingSkills:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                     atsAnalysis:
+ *                       type: object
  *                     tailoredResume:
  *                       type: object
  *                     jobDescription:

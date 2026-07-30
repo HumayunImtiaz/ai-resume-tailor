@@ -8,7 +8,6 @@ interface CreateJobInput {
   title: string;
   company?: string;
   rawText: string;
-  coverLetterText?: string;
 }
 
 export const jobService = {
@@ -44,7 +43,6 @@ export const jobService = {
         userId,
         resumeId: data.resumeId,
         jobDescriptionId: jobDescription.id,
-        coverLetterText: data.coverLetterText,
       });
 
       return {
@@ -77,7 +75,7 @@ export const jobService = {
         const tailoredVersion = await prisma.tailoredVersion.findFirst({
           where: { resumeId, jobDescriptionId },
           orderBy: { createdAt: 'desc' },
-          select: { matchScore: true, missingKeywords: true, tailoredText: true },
+          select: { matchScore: true, matchedSkills: true, missingSkills: true, atsAnalysis: true, tailoredText: true },
         });
 
         if (tailoredVersion) {
@@ -93,7 +91,9 @@ export const jobService = {
             data: {
               state,
               matchScore: tailoredVersion.matchScore,
-              missingKeywords: tailoredVersion.missingKeywords,
+              matchedSkills: tailoredVersion.matchedSkills,
+              missingSkills: tailoredVersion.missingSkills,
+              atsAnalysis: tailoredVersion.atsAnalysis,
               tailoredResume,
             },
           };
@@ -186,7 +186,9 @@ export const jobService = {
         data: {
           id: tailoredVersion.id,
           matchScore: tailoredVersion.matchScore,
-          missingKeywords: tailoredVersion.missingKeywords,
+          matchedSkills: tailoredVersion.matchedSkills,
+          missingSkills: tailoredVersion.missingSkills,
+          atsAnalysis: tailoredVersion.atsAnalysis,
           tailoredResume,
           jobDescription: tailoredVersion.jobDescription,
           createdAt: tailoredVersion.createdAt,

@@ -10,6 +10,12 @@ export interface Resume {
   uploadedAt: string;
 }
 
+export interface CoverLetter {
+  id: string;
+  originalFilename: string;
+  uploadedAt: string;
+}
+
 export interface TailoredVersion {
   id: string;
   matchScore: number;
@@ -24,6 +30,8 @@ export interface TailoredVersion {
 interface DashboardContextType {
   resumes: Resume[];
   activeResume: Resume | null;
+  coverLetters: CoverLetter[];
+  activeCoverLetter: CoverLetter | null;
   versions: TailoredVersion[];
   isLoading: boolean;
   isCheckingAuth: boolean;
@@ -37,6 +45,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [resumes, setResumes] = useState<Resume[]>([]);
+  const [coverLetters, setCoverLetters] = useState<CoverLetter[]>([]);
   const [versions, setVersions] = useState<TailoredVersion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
@@ -52,6 +61,15 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         (a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
       );
       setResumes(sortedResumes);
+
+      const clRes = await apiFetch("/api/cover-letters");
+      if (clRes.ok) {
+        const clJson = await clRes.json();
+        const clList: CoverLetter[] = clJson.data || [];
+        setCoverLetters([...clList].sort(
+          (a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
+        ));
+      }
 
       if (sortedResumes.length > 0) {
         const mostRecent = sortedResumes[0];
@@ -84,12 +102,15 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   };
 
   const activeResume = resumes.length > 0 ? resumes[0] : null;
+  const activeCoverLetter = coverLetters.length > 0 ? coverLetters[0] : null;
 
   return (
     <DashboardContext.Provider
       value={{
         resumes,
         activeResume,
+        coverLetters,
+        activeCoverLetter,
         versions,
         isLoading,
         isCheckingAuth,

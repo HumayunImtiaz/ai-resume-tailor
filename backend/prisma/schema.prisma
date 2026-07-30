@@ -14,6 +14,7 @@ model User {
   passwordHash    String
   createdAt       DateTime         @default(now())
   resumes         Resume[]
+  coverLetters    CoverLetter[]
   jobDescriptions JobDescription[]
 }
 
@@ -26,6 +27,15 @@ model Resume {
   uploadedAt       DateTime          @default(now())
   user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   tailoredVersions TailoredVersion[]
+}
+
+model CoverLetter {
+  id               String            @id @default(uuid())
+  userId           String
+  originalFilename String
+  rawText          String
+  uploadedAt       DateTime          @default(now())
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model JobDescription {
@@ -44,7 +54,9 @@ model TailoredVersion {
   resumeId         String
   jobDescriptionId String
   matchScore       Int
-  missingKeywords  Json
+  matchedSkills    Json?
+  missingSkills    Json
+  atsAnalysis      Json?
   tailoredText     String
   createdAt        DateTime       @default(now())
   resume           Resume         @relation(fields: [resumeId], references: [id], onDelete: Cascade)

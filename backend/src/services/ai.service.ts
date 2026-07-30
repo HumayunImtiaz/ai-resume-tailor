@@ -15,16 +15,28 @@ Your task is to compare the provided resume text with the job description and re
 
 Rules for rewriting:
 1. Never invent experience, skills, employers, dates, or achievements not present in the original resume text or cover letter — base everything strictly on the resume AND cover letter.
-2. Reorganize and rephrase existing content to emphasize what's most relevant to the job description — you may reorder bullet points within a section (most relevant first) and reword them using the job description's terminology, but every bullet must trace back to something actually in the original resume or cover letter.
-3. Extract the candidate's actual name and contact info (email, phone, location) exactly as given — do not alter any contact details.
-4. Never fabricate a URL. Only use URLs exactly as provided in the links context supplied with the resume. If a label like "GitHub" appears in the resume text but no matching URL was provided, include the label with an empty url (""). Do not invent or guess URLs.
-5. Also correct any grammar, spelling, punctuation, and awkward phrasing issues found in the original resume text, while preserving the original meaning and factual content exactly — fix HOW something is said, never WHAT is claimed.
+2. Reorganize and rephrase existing content to emphasize what's most relevant to the job description. Every bullet must trace back to something actually in the original resume or cover letter.
+3. Extract the candidate's actual name and contact info exactly as given — do not alter any contact details.
+4. Never fabricate a URL. Only use URLs exactly as provided in the links context. Do not invent or guess URLs.
+5. Fix any grammar or spelling issues while preserving the original meaning exactly — fix HOW something is said, never WHAT is claimed.
+6. The cover letter is for supporting context only—never copy paragraphs directly into the resume.
 
 You MUST respond with exactly a valid JSON object and nothing else. Avoid using markdown formatting (like \`\`\`json) or adding any conversational text.
 The JSON object must match this structure exactly:
 {
   "matchScore": <integer between 0 and 100 representing the match percentage>,
-  "missingKeywords": [<array of important skills or terms from the job description missing from the resume>],
+  "matchedSkills": [<array of strings representing skills from the job description found in the resume or cover letter>],
+  "missingSkills": [
+    {
+      "skill": "<string, skill from job description>",
+      "reason": "<string, e.g. 'Not found in the uploaded Resume or Cover Letter.'>"
+    }
+  ],
+  "atsAnalysis": {
+    "strengths": [<array of strings>],
+    "gaps": [<array of strings>],
+    "recommendations": [<array of strings>]
+  },
   "tailoredResume": {
     "fullName": "<string, extracted from original resume>",
     "title": "<string, a professional title line, e.g. 'Full-Stack Software Engineer' — infer from resume content if not explicit>",
@@ -60,7 +72,7 @@ The JSON object must match this structure exactly:
       : '';
 
     const coverLetterContext = coverLetterText && coverLetterText.trim().length > 0
-      ? `\n\nCover Letter:\n${coverLetterText}\n\nThe candidate also provided this cover letter for this specific job — use it as additional truthful context about their experience, alongside the resume, when identifying relevant skills and writing the tailored resume. Do not copy the cover letter's text directly into the resume — use it only to inform what real experience to surface.`
+      ? `\n\nCover Letter:\n${coverLetterText}\n\nThe candidate also provided this cover letter. Use it as additional truthful context about their experience, alongside the resume, when identifying relevant skills and writing the tailored resume.`
       : '';
 
     const userPrompt = `Job Description:
@@ -92,7 +104,8 @@ Parse the given resume text into the requested structure, using the job descript
     const tr = data.tailoredResume;
     if (
       typeof data.matchScore !== 'number' || 
-      !Array.isArray(data.missingKeywords) || 
+      !Array.isArray(data.missingSkills) || 
+      !Array.isArray(data.matchedSkills) ||
       !tr ||
       typeof tr.fullName !== 'string' ||
       tr.fullName.trim() === '' ||
@@ -114,7 +127,9 @@ Parse the given resume text into the requested structure, using the job descript
       success: true,
       data: {
         matchScore: data.matchScore,
-        missingKeywords: data.missingKeywords,
+        matchedSkills: data.matchedSkills,
+        missingSkills: data.missingSkills,
+        atsAnalysis: data.atsAnalysis,
         tailoredResume: data.tailoredResume,
       },
     };

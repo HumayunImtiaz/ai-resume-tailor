@@ -9,7 +9,9 @@ import TailoredResult from "@/components/TailoredResult";
 interface TailoredVersionDetail {
   id: string;
   matchScore: number;
-  missingKeywords: string[];
+  matchedSkills?: string[];
+  missingSkills?: { skill: string; reason: string }[];
+  atsAnalysis?: { strengths?: string[]; gaps?: string[]; recommendations?: string[] } | null;
   tailoredResume: any;
   createdAt: string;
   jobDescription: {
@@ -127,7 +129,9 @@ export default function TailoredVersionDetailPage() {
       {/* ── Tailored Result ── */}
       <TailoredResult
         matchScore={version?.matchScore ?? null}
-        missingKeywords={version?.missingKeywords ?? []}
+        matchedSkills={version?.matchedSkills ?? []}
+        missingSkills={version?.missingSkills ?? []}
+        atsAnalysis={version?.atsAnalysis ?? null}
         tailoredResume={version?.tailoredResume ?? null}
         jobDescriptionId={version?.jobDescription?.id ?? null}
       />

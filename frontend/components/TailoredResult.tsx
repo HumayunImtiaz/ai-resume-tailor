@@ -1,14 +1,22 @@
 "use client";
 
 import React, { useState } from "react";
-import { CheckCircle2, Copy, Check, Download, FileText } from "lucide-react";
+import { CheckCircle2, Copy, Check, Download, FileText, AlertTriangle, Lightbulb, Target, ShieldCheck } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 
-interface TailoredResultProps {
+export interface TailoredResultProps {
   /** Match score 0–100 */
   matchScore: number | null;
-  /** Array of keywords missing from the resume */
-  missingKeywords: string[];
+  /** Skills from the JD found in the resume/cover letter */
+  matchedSkills?: string[];
+  /** Skills missing, each with a reason */
+  missingSkills?: { skill: string; reason: string }[];
+  /** ATS analysis with strengths, gaps, recommendations */
+  atsAnalysis?: {
+    strengths?: string[];
+    gaps?: string[];
+    recommendations?: string[];
+  } | null;
   /** The structured/parsed tailored resume object */
   tailoredResume: any;
   /** Job description ID — used for the .docx download endpoint */
@@ -30,7 +38,9 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
  */
 export default function TailoredResult({
   matchScore,
-  missingKeywords,
+  matchedSkills = [],
+  missingSkills = [],
+  atsAnalysis,
   tailoredResume,
   jobDescriptionId,
 }: TailoredResultProps) {
@@ -137,30 +147,132 @@ export default function TailoredResult({
         </p>
       </div>
 
-      {/* ── Missing Keywords Card ── */}
+      {/* ── Matched Skills Card ── */}
+      {matchedSkills.length > 0 && (
+        <div className="p-8 rounded-3xl bg-white/90 backdrop-blur-xl border border-ink-navy/10 shadow-[0_4px_25px_rgba(0,0,0,0.03)]">
+          <h3 className="font-fraunces text-xl font-bold text-ink-navy mb-1 flex items-center gap-2">
+            <ShieldCheck className="w-5 h-5 text-emerald-500" />
+            Matched Skills
+          </h3>
+          <p className="text-ink-navy/50 text-xs mb-4">
+            Skills from the job description found in your resume or cover letter
+          </p>
+          <div className="flex flex-wrap gap-2.5">
+            {matchedSkills.map((skill) => (
+              <span
+                key={skill}
+                className="px-3.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200 shadow-sm"
+              >
+                ✓ {skill}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Missing Skills Card ── */}
       <div className="p-8 rounded-3xl bg-white/90 backdrop-blur-xl border border-ink-navy/10 shadow-[0_4px_25px_rgba(0,0,0,0.03)]">
-        <h3 className="font-fraunces text-xl font-bold text-ink-navy mb-1">Missing Keywords</h3>
+        <h3 className="font-fraunces text-xl font-bold text-ink-navy mb-1 flex items-center gap-2">
+          <AlertTriangle className="w-5 h-5 text-amber" />
+          Missing Skills &amp; Keywords
+        </h3>
         <p className="text-ink-navy/50 text-xs mb-4">
-          Important terms from the job description not present in the base resume
+          Important terms from the job description not present in your professional profile
         </p>
-        {missingKeywords.length === 0 ? (
+        {missingSkills.length === 0 ? (
           <p className="text-emerald-600 text-sm font-semibold flex items-center gap-1.5">
             <CheckCircle2 className="w-4 h-4 text-emerald-500" />
             No major gap keywords found — excellent coverage!
           </p>
         ) : (
-          <div className="flex flex-wrap gap-2.5">
-            {missingKeywords.map((kw) => (
-              <span
-                key={kw}
-                className="px-3.5 py-1.5 rounded-xl bg-amber/10 text-ink-navy text-xs font-semibold border border-amber/25 shadow-sm"
+          <div className="space-y-2.5">
+            {missingSkills.map((item, idx) => (
+              <div
+                key={typeof item === 'string' ? item : item.skill || idx}
+                className="flex items-start gap-3 p-3.5 rounded-xl bg-amber/5 border border-amber/15"
               >
-                {kw}
-              </span>
+                <span className="px-2.5 py-1 rounded-lg bg-amber/15 text-ink-navy text-xs font-bold border border-amber/25 shrink-0 mt-0.5">
+                  {typeof item === 'string' ? item : item.skill}
+                </span>
+                {typeof item !== 'string' && item.reason && (
+                  <span className="text-xs text-ink-navy/60 leading-relaxed">
+                    {item.reason}
+                  </span>
+                )}
+              </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* ── ATS Analysis Card ── */}
+      {atsAnalysis && (atsAnalysis.strengths?.length || atsAnalysis.gaps?.length || atsAnalysis.recommendations?.length) ? (
+        <div className="p-8 rounded-3xl bg-white/90 backdrop-blur-xl border border-ink-navy/10 shadow-[0_4px_25px_rgba(0,0,0,0.03)]">
+          <h3 className="font-fraunces text-xl font-bold text-ink-navy mb-1 flex items-center gap-2">
+            <Target className="w-5 h-5 text-violet-500" />
+            ATS Analysis
+          </h3>
+          <p className="text-ink-navy/50 text-xs mb-5">
+            Detailed analysis of your resume against ATS requirements
+          </p>
+
+          <div className="space-y-5">
+            {/* Strengths */}
+            {atsAnalysis.strengths && atsAnalysis.strengths.length > 0 && (
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-600 mb-2.5 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Strengths
+                </h4>
+                <ul className="space-y-1.5">
+                  {atsAnalysis.strengths.map((s: string, i: number) => (
+                    <li key={i} className="text-sm text-ink-navy/75 flex items-start gap-2">
+                      <span className="text-emerald-400 mt-0.5 shrink-0">●</span>
+                      {s}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Gaps */}
+            {atsAnalysis.gaps && atsAnalysis.gaps.length > 0 && (
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-amber mb-2.5 flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  Gaps
+                </h4>
+                <ul className="space-y-1.5">
+                  {atsAnalysis.gaps.map((g: string, i: number) => (
+                    <li key={i} className="text-sm text-ink-navy/75 flex items-start gap-2">
+                      <span className="text-amber mt-0.5 shrink-0">●</span>
+                      {g}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Recommendations */}
+            {atsAnalysis.recommendations && atsAnalysis.recommendations.length > 0 && (
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-violet-500 mb-2.5 flex items-center gap-1.5">
+                  <Lightbulb className="w-3.5 h-3.5" />
+                  Recommendations
+                </h4>
+                <ul className="space-y-1.5">
+                  {atsAnalysis.recommendations.map((r: string, i: number) => (
+                    <li key={i} className="text-sm text-ink-navy/75 flex items-start gap-2">
+                      <span className="text-violet-400 mt-0.5 shrink-0">●</span>
+                      {r}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
 
       {/* ── Tailored Resume Preview Section ── */}
       <div className="p-8 rounded-3xl bg-white/90 backdrop-blur-xl border border-ink-navy/10 shadow-[0_4px_25px_rgba(0,0,0,0.03)]">

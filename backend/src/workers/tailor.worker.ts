@@ -15,7 +15,19 @@ export const initializeTailorWorker = () => {
 
       // Fetch the actual Resume and JobDescription records to get their rawText
       const [resume, jobDescription] = await Promise.all([
-        prisma.resume.findUnique({ where: { id: resumeId }, select: { rawText: true, links: true } }),
+        prisma.resume.findUnique({
+          where: { id: resumeId },
+          include: {
+            user: {
+              include: {
+                coverLetters: {
+                  orderBy: { uploadedAt: 'desc' },
+                  take: 1
+                }
+              }
+            }
+          }
+        }),
         prisma.jobDescription.findUnique({ where: { id: jobDescriptionId } }),
       ]);
 
@@ -25,28 +37,36 @@ export const initializeTailorWorker = () => {
         );
       }
 
+      const coverLetterText = resume.user.coverLetters[0]?.rawText || '';
+
       // Run real AI analysis
-      const aiResult = await analyzeMatch(resume.rawText, jobDescription.rawText, (resume.links as any) || [], job.data.coverLetterText);
+      const aiResult = await analyzeMatch(resume.rawText, jobDescription.rawText, (resume.links as any) || [], coverLetterText);
 
       let matchScore: number;
-      let missingKeywords: string[];
+      let matchedSkills: any;
+      let missingSkills: any;
+      let atsAnalysis: any;
       let tailoredText: string;
 
       if (!aiResult.success || !aiResult.data) {
         // Graceful fallback — log clearly and continue with neutral values
         console.error(
-          `[Worker] Job ${job.id}: AI analysis failed — falling back to placeholder values (matchScore: 0, missingKeywords: []).`
+          `[Worker] Job ${job.id}: AI analysis failed — falling back to placeholder values.`
         );
         matchScore = 0;
-        missingKeywords = [];
+        matchedSkills = [];
+        missingSkills = [];
+        atsAnalysis = {};
         tailoredText = JSON.stringify({});
       } else {
         const tr = aiResult.data.tailoredResume as any;
         console.log(
-          `[Worker] Job ${job.id}: AI analysis succeeded — matchScore: ${aiResult.data.matchScore}, missingKeywords: [${aiResult.data.missingKeywords.join(', ')}], skills: ${tr.skills?.length || 0}, experience: ${tr.experience?.length || 0}, projects: ${tr.projects?.length || 0}.`
+          `[Worker] Job ${job.id}: AI analysis succeeded — matchScore: ${aiResult.data.matchScore}, missingSkills: ${aiResult.data.missingSkills?.length || 0}.`
         );
         matchScore = aiResult.data.matchScore;
-        missingKeywords = aiResult.data.missingKeywords;
+        matchedSkills = aiResult.data.matchedSkills;
+        missingSkills = aiResult.data.missingSkills;
+        atsAnalysis = aiResult.data.atsAnalysis;
         tailoredText = JSON.stringify(tr);
       }
 
@@ -56,7 +76,9 @@ export const initializeTailorWorker = () => {
           resumeId,
           jobDescriptionId,
           matchScore,
-          missingKeywords,
+          matchedSkills,
+          missingSkills,
+          atsAnalysis,
           tailoredText,
         },
       });

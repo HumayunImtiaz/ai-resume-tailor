@@ -6,7 +6,6 @@ export interface TailorJobPayload {
   userId: string;
   resumeId: string;
   jobDescriptionId: string;
-  coverLetterText?: string;
 }
 
 // Initialize the queue
