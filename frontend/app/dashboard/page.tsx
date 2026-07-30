@@ -1,133 +1,393 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  Briefcase,
+  Building2,
+  CheckCircle2,
+  AlertTriangle,
+  RotateCcw,
+  Sparkles,
+  FileText,
+  Plus,
+} from "lucide-react";
+import { useDashboard } from "@/lib/DashboardContext";
+import { apiFetch } from "@/lib/api";
 import ResumeUploader from "@/components/ResumeUploader";
-import ResumeList from "@/components/ResumeList";
-import { Sparkles, LogOut, Hexagon, Waves } from "lucide-react";
+import TailorProgress from "@/components/TailorProgress";
+import TailoredResult from "@/components/TailoredResult";
+
+type PageState = "form" | "processing" | "completed" | "failed";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [isChecking, setIsChecking] = useState(true);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const { activeResume, isLoading, refreshDashboard } = useDashboard();
 
+  // Form state
+  const [title, setTitle] = useState("");
+  const [company, setCompany] = useState("");
+  const [rawText, setRawText] = useState("");
+  const [coverLetterText, setCoverLetterText] = useState("");
+  const [formError, setFormError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Processing state
+  const [pageState, setPageState] = useState<PageState>("form");
+  const [queueJobId, setQueueJobId] = useState<string | null>(null);
+  const [queueState, setQueueState] = useState("waiting");
+  const [jobDescId, setJobDescId] = useState<string | null>(null);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Completed results
+  const [matchScore, setMatchScore] = useState<number | null>(null);
+  const [missingKeywords, setMissingKeywords] = useState<string[]>([]);
+  const [tailoredResume, setTailoredResume] = useState<any>(null);
+
+  // Cleanup polling on unmount
   useEffect(() => {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      router.replace("/login");
-    } else {
-      setIsChecking(false);
-    }
-  }, [router]);
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    router.replace("/login");
-  };
-
-  const handleUploadSuccess = useCallback(() => {
-    setRefreshKey((k) => k + 1);
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
   }, []);
 
-  if (isChecking) {
+  const startPolling = useCallback(
+    (jobId: string) => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+
+      pollingRef.current = setInterval(async () => {
+        try {
+          const res = await apiFetch(`/api/jobs/status/${jobId}`);
+          const json = await res.json();
+          const state = json.data?.state;
+
+          setQueueState(state || "waiting");
+
+          if (state === "completed") {
+            if (pollingRef.current) clearInterval(pollingRef.current);
+            if (typeof json.data?.matchScore === "number") {
+              setMatchScore(json.data.matchScore);
+            }
+            if (Array.isArray(json.data?.missingKeywords)) {
+              setMissingKeywords(json.data.missingKeywords);
+            }
+            if (json.data?.tailoredResume) {
+              setTailoredResume(json.data.tailoredResume);
+            }
+            setPageState("completed");
+            // Refresh sidebar to display the new tailored version
+            await refreshDashboard();
+          } else if (state === "failed") {
+            if (pollingRef.current) clearInterval(pollingRef.current);
+            setPageState("failed");
+          }
+        } catch {
+          // Retry on network errors
+        }
+      }, 1500);
+    },
+    [refreshDashboard]
+  );
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError("");
+
+    if (!activeResume) {
+      setFormError("No resume available. Please upload a resume first.");
+      return;
+    }
+    if (!title.trim()) {
+      setFormError("Job title is required.");
+      return;
+    }
+    if (rawText.length < 20) {
+      setFormError("Job description must be at least 20 characters.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const res = await apiFetch("/api/jobs", {
+        method: "POST",
+        body: JSON.stringify({
+          resumeId: activeResume.id,
+          title: title.trim(),
+          company: company.trim() || undefined,
+          rawText,
+          coverLetterText: coverLetterText.trim() || undefined,
+        }),
+      });
+      const json = await res.json();
+      const jobId = json.data?.queueJobId;
+      const descId = json.data?.jobDescription?.id;
+
+      if (!jobId) {
+        setFormError("Unexpected response — no job ID returned.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      setQueueJobId(jobId);
+      if (descId) setJobDescId(descId);
+      setPageState("processing");
+      startPolling(jobId);
+    } catch (err: any) {
+      setFormError(err.message || "Failed to create job. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResetForm = () => {
+    setTitle("");
+    setCompany("");
+    setRawText("");
+    setCoverLetterText("");
+    setFormError("");
+    setQueueJobId(null);
+    setJobDescId(null);
+    setQueueState("waiting");
+    setMatchScore(null);
+    setMissingKeywords([]);
+    setTailoredResume(null);
+    setPageState("form");
+  };
+
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#FDFDFE] flex flex-col justify-center items-center">
-         <div className="relative w-14 h-14">
-            <div className="absolute inset-0 rounded-full border-4 border-amber/10" />
-            <div className="absolute inset-0 rounded-full border-4 border-amber border-t-transparent animate-[spin_1s_ease-in-out_infinite]" />
-         </div>
+      <div className="flex-1 flex flex-col items-center justify-center py-16">
+        <div className="w-10 h-10 border-4 border-amber border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-ink-navy/50 text-sm font-medium">Loading dashboard...</p>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-[#F8F9FA] text-ink-navy font-sans antialiased relative overflow-hidden selection:bg-amber/20">
-      
-      {/* Stunning Soft Pastel Background Gradients */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-gradient-to-br from-amber/20 via-rose-300/10 to-transparent blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-gradient-to-tl from-sky-300/20 via-indigo-300/10 to-transparent blur-[120px] pointer-events-none" />
-      <div className="absolute top-[20%] right-[20%] w-[30vw] h-[30vw] rounded-full bg-gradient-to-tr from-orange-200/20 to-transparent blur-[80px] pointer-events-none" />
-
-      {/* Very faint grid */}
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.02] pointer-events-none mix-blend-multiply" />
-
-      <div className="relative z-10 flex flex-col min-h-screen max-w-7xl mx-auto w-full px-5 md:px-8 py-8">
-        
-        {/* Playful & Premium Header */}
-        <header className="flex justify-between items-center bg-white/60 backdrop-blur-xl border border-white shadow-[0_4px_40px_rgb(0,0,0,0.02)] rounded-[24px] p-4 md:px-6 mb-10 transition-all">
-           <div className="flex items-center gap-3">
-             <div className="relative flex items-center justify-center w-11 h-11 rounded-[14px] bg-gradient-to-br from-amber to-orange-400 p-0.5 shadow-lg shadow-amber/20">
-                <div className="relative flex items-center justify-center w-full h-full bg-white rounded-[12px]">
-                   <Hexagon className="w-6 h-6 text-amber fill-amber/10" />
-                </div>
-             </div>
-             <div>
-               <h1 className="font-fraunces text-xl font-bold tracking-tight text-ink-navy leading-tight inline-flex items-center gap-1.5">
-                  AI Tailor <Sparkles className="w-4 h-4 text-amber" />
-               </h1>
-             </div>
-           </div>
-
-           <div className="flex items-center gap-2">
-              <button
-                 onClick={handleLogout}
-                 className="group inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-ink-navy/60 hover:text-ink-navy transition-all rounded-[14px] bg-white hover:bg-gray-50 border border-gray-100 shadow-sm hover:shadow"
-              >
-                 Log Out
-                 <LogOut className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-              </button>
-           </div>
-        </header>
-
-        {/* Hero Area */}
-        <div className="text-center mb-12 flex flex-col items-center">
-           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-gray-100 shadow-sm mb-6 text-sm font-semibold text-amber">
-              <Waves className="w-4 h-4" /> Start optimizing your career
-           </div>
-           
-           <h2 className="font-fraunces text-4xl sm:text-5xl lg:text-5xl font-bold text-ink-navy tracking-tight mb-5 leading-tight">
-              Craft the Perfect Resume <br className="hidden md:block" />
-              <span className="relative">
-                <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-amber via-orange-500 to-amber font-sans">in Seconds.</span>
-                <svg className="absolute w-full h-3 -bottom-1 left-0 text-amber/20 z-0" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="4" fill="transparent"/></svg>
-              </span>
-           </h2>
-           <p className="text-ink-navy/60 text-lg max-w-xl">
-              Transform your ordinary base resume into an ATS-destroying, tailored masterpiece. Upload below to ignite the engine.
-           </p>
-        </div>
-
-        {/* Main Content Sections */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
-           
-           {/* Upload Side */}
-           <div className="col-span-1 lg:col-span-5 h-full">
-              <div className="relative group rounded-[32px] h-full">
-                 <div className="absolute -inset-1 blur-xl bg-gradient-to-tr from-amber/30 to-orange-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700 rounded-[32px]" />
-                 <div className="relative bg-white/70 backdrop-blur-xl border border-white rounded-[32px] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] h-full flex flex-col items-center p-2">
-                    <ResumeUploader onUploadSuccess={handleUploadSuccess} />
-                 </div>
-              </div>
-           </div>
-
-           {/* List Side */}
-           <div className="col-span-1 lg:col-span-7">
-              <div className="bg-white/70 backdrop-blur-xl border border-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-8 min-h-[450px]">
-                 <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100 relative">
-                    <div>
-                       <h3 className="font-fraunces text-2xl font-bold text-ink-navy">Document Library</h3>
-                       <p className="text-ink-navy/50 text-sm mt-1">Select a base resume to generate a tailored version.</p>
-                    </div>
-                 </div>
-                 
-                 <ResumeList refreshKey={refreshKey} />
-              </div>
-           </div>
-           
+  // ── No Resume Uploaded View ──
+  if (!activeResume) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center py-8">
+        <div className="w-full max-w-xl bg-white/80 backdrop-blur-xl border border-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 md:p-10 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-amber/10 border border-amber/20 flex items-center justify-center mx-auto mb-5 text-amber">
+            <FileText className="w-8 h-8" />
+          </div>
+          <h2 className="font-fraunces text-3xl font-bold text-ink-navy mb-2">
+            Upload Your Resume
+          </h2>
+          <p className="text-ink-navy/60 text-sm max-w-md mx-auto mb-8">
+            Upload your base resume to get started. We will analyze and rewrite it for any job description.
+          </p>
+          <div className="min-h-[260px] flex flex-col">
+            <ResumeUploader onUploadSuccess={refreshDashboard} />
+          </div>
         </div>
       </div>
+    );
+  }
+
+  // ── Main Tailor Job Form View ──
+  return (
+    <div className="flex-1 flex flex-col items-center w-full max-w-[900px] mx-auto py-2">
+      {/* ── FORM STATE ── */}
+      {pageState === "form" && (
+        <div className="w-full bg-white/80 backdrop-blur-xl border border-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-10">
+          <div className="mb-8">
+            <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
+              <h1 className="font-fraunces text-3xl font-bold text-ink-navy">
+                Tailor Resume to Job
+              </h1>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-ink-navy/5 text-ink-navy/70 text-xs font-semibold">
+                <FileText className="w-3.5 h-3.5 text-amber" />
+                Active: <span className="text-ink-navy font-bold truncate max-w-[180px]">{activeResume.originalFilename}</span>
+              </div>
+            </div>
+            <p className="text-ink-navy/60 text-sm">
+              Paste the target job description below and we&apos;ll craft an optimized version tailored specifically for this role.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Job Title */}
+            <div>
+              <label htmlFor="job-title" className="block text-ink-navy font-semibold text-sm mb-1.5">
+                Job Title <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <Briefcase className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-navy/40" />
+                <input
+                  id="job-title"
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g. Senior Frontend Engineer"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-ink-navy/15 bg-white text-ink-navy text-sm placeholder:text-ink-navy/30 focus:outline-none focus:ring-2 focus:ring-amber focus:border-transparent transition-shadow"
+                />
+              </div>
+            </div>
+
+            {/* Company */}
+            <div>
+              <label htmlFor="company" className="block text-ink-navy font-semibold text-sm mb-1.5">
+                Company Name <span className="text-ink-navy/40 font-normal">(optional)</span>
+              </label>
+              <div className="relative">
+                <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-navy/40" />
+                <input
+                  id="company"
+                  type="text"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  placeholder="e.g. Google"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-ink-navy/15 bg-white text-ink-navy text-sm placeholder:text-ink-navy/30 focus:outline-none focus:ring-2 focus:ring-amber focus:border-transparent transition-shadow"
+                />
+              </div>
+            </div>
+
+            {/* Job Description Textarea */}
+            <div>
+              <label htmlFor="raw-text" className="block text-ink-navy font-semibold text-sm mb-1.5">
+                Job Description <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                id="raw-text"
+                value={rawText}
+                onChange={(e) => setRawText(e.target.value)}
+                placeholder="Paste the full job description here..."
+                rows={9}
+                className="w-full px-4 py-3 rounded-xl border border-ink-navy/15 bg-white text-ink-navy text-sm placeholder:text-ink-navy/30 focus:outline-none focus:ring-2 focus:ring-amber focus:border-transparent transition-shadow resize-y min-h-[160px]"
+              />
+              <div className="flex justify-between items-center mt-1.5">
+                <p className={`text-xs ${rawText.length < 20 ? "text-ink-navy/40" : "text-emerald-600 font-medium"}`}>
+                  {rawText.length < 20
+                    ? `${20 - rawText.length} more characters required`
+                    : "✓ Length requirement met"}
+                </p>
+                <p className="text-xs text-ink-navy/40">{rawText.length.toLocaleString()} chars</p>
+              </div>
+            </div>
+
+            {/* Cover Letter Textarea (optional) */}
+            <div>
+              <label htmlFor="cover-letter-text" className="block text-ink-navy font-semibold text-sm mb-1.5">
+                Cover Letter for this Job <span className="text-ink-navy/40 font-normal">(optional)</span>
+              </label>
+              <textarea
+                id="cover-letter-text"
+                value={coverLetterText}
+                onChange={(e) => setCoverLetterText(e.target.value)}
+                placeholder="Paste an optional cover letter — helps us find more relevant experience to highlight..."
+                rows={5}
+                className="w-full px-4 py-3 rounded-xl border border-ink-navy/15 bg-white text-ink-navy text-sm placeholder:text-ink-navy/30 focus:outline-none focus:ring-2 focus:ring-amber focus:border-transparent transition-shadow resize-y min-h-[110px]"
+              />
+              <p className="text-xs text-ink-navy/40 mt-1.5">
+                Optional — helps us find more relevant experience to highlight in your tailored resume.
+              </p>
+            </div>
+
+            {/* Form Error */}
+            {formError && (
+              <div className="p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm font-semibold flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 text-red-500" />
+                <span>{formError}</span>
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-amber to-orange-400 text-ink-navy font-bold text-base shadow-lg shadow-amber/20 hover:shadow-amber/30 transition-all focus:outline-none focus:ring-2 focus:ring-amber focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-ink-navy border-t-transparent rounded-full animate-spin" />
+                  Submitting Job...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-5 h-5 fill-ink-navy/20" />
+                  Generate Tailored Resume
+                </>
+              )}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* ── PROCESSING STATE ── */}
+      {pageState === "processing" && (
+        <div className="w-full bg-white/80 backdrop-blur-xl border border-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 md:p-12 flex flex-col items-center text-center">
+          <div className="mb-8">
+            <h2 className="font-fraunces text-3xl font-bold text-ink-navy mb-2">
+              Tailoring in Progress
+            </h2>
+            <p className="text-ink-navy/60 text-sm">
+              Analyzing keywords and rewriting resume bullet points...
+            </p>
+          </div>
+          <div className="w-full max-w-md">
+            <TailorProgress state={queueState} />
+          </div>
+        </div>
+      )}
+
+      {/* ── COMPLETED STATE ── */}
+      {pageState === "completed" && (
+        <div className="w-full flex flex-col items-center">
+          <div className="mb-8 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-100 border border-emerald-200 flex items-center justify-center mx-auto mb-4 text-emerald-600 shadow-sm">
+              <CheckCircle2 className="w-7 h-7" />
+            </div>
+            <h2 className="font-fraunces text-3xl font-bold text-ink-navy mb-2">
+              Your Tailored Resume is Ready!
+            </h2>
+            <p className="text-ink-navy/60 text-sm max-w-md mx-auto">
+              Review your match breakdown and download your tailored resume below.
+            </p>
+          </div>
+
+          <TailoredResult
+            matchScore={matchScore}
+            missingKeywords={missingKeywords}
+            tailoredResume={tailoredResume}
+            jobDescriptionId={jobDescId}
+          />
+
+          <div className="mt-8">
+            <button
+              onClick={handleResetForm}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-ink-navy text-parchment font-bold text-sm hover:bg-ink-navy/90 transition-all shadow-md"
+            >
+              <Plus className="w-4 h-4 text-amber" />
+              Tailor for Another Job
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── FAILED STATE ── */}
+      {pageState === "failed" && (
+        <div className="w-full bg-white/80 backdrop-blur-xl border border-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 md:p-12 flex flex-col items-center text-center">
+          <div className="w-14 h-14 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center mx-auto mb-4 text-red-500">
+            <AlertTriangle className="w-7 h-7" />
+          </div>
+          <h2 className="font-fraunces text-3xl font-bold text-ink-navy mb-2">
+            Tailoring Failed
+          </h2>
+          <p className="text-ink-navy/60 text-sm max-w-md mx-auto mb-8">
+            Something went wrong while optimizing your resume. Please try submitting again.
+          </p>
+
+          <button
+            onClick={handleResetForm}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-ink-navy text-parchment font-bold text-sm hover:bg-ink-navy/90 transition-all shadow-md"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Try Again
+          </button>
+        </div>
+      )}
     </div>
   );
 }
-

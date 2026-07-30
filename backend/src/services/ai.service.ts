@@ -4,7 +4,8 @@ import { env } from '../config/env';
 export const analyzeMatch = async (
   resumeText: string,
   jobText: string,
-  links: { text: string; url: string }[] = []
+  links: { text: string; url: string }[] = [],
+  coverLetterText?: string
 ) => {
   try {
     const groq = new Groq({ apiKey: env.groqApiKey });
@@ -13,10 +14,11 @@ export const analyzeMatch = async (
 Your task is to compare the provided resume text with the job description and rewrite the resume for maximum impact.
 
 Rules for rewriting:
-1. Never invent experience, skills, employers, dates, or achievements not present in the original resume text.
-2. Reorganize and rephrase existing content to emphasize what's most relevant to the job description — you may reorder bullet points within a section (most relevant first) and reword them using the job description's terminology, but every bullet must trace back to something actually in the original resume.
+1. Never invent experience, skills, employers, dates, or achievements not present in the original resume text or cover letter — base everything strictly on the resume AND cover letter.
+2. Reorganize and rephrase existing content to emphasize what's most relevant to the job description — you may reorder bullet points within a section (most relevant first) and reword them using the job description's terminology, but every bullet must trace back to something actually in the original resume or cover letter.
 3. Extract the candidate's actual name and contact info (email, phone, location) exactly as given — do not alter any contact details.
 4. Never fabricate a URL. Only use URLs exactly as provided in the links context supplied with the resume. If a label like "GitHub" appears in the resume text but no matching URL was provided, include the label with an empty url (""). Do not invent or guess URLs.
+5. Also correct any grammar, spelling, punctuation, and awkward phrasing issues found in the original resume text, while preserving the original meaning and factual content exactly — fix HOW something is said, never WHAT is claimed.
 
 You MUST respond with exactly a valid JSON object and nothing else. Avoid using markdown formatting (like \`\`\`json) or adding any conversational text.
 The JSON object must match this structure exactly:
@@ -57,11 +59,15 @@ The JSON object must match this structure exactly:
       ? `\n\nThe candidate's resume contains these hyperlinks (use these exact URLs when referencing GitHub/LinkedIn/Portfolio/etc. in the contactLine.links array — do not invent or alter URLs):\n${JSON.stringify(links)}`
       : '';
 
+    const coverLetterContext = coverLetterText && coverLetterText.trim().length > 0
+      ? `\n\nCover Letter:\n${coverLetterText}\n\nThe candidate also provided this cover letter for this specific job — use it as additional truthful context about their experience, alongside the resume, when identifying relevant skills and writing the tailored resume. Do not copy the cover letter's text directly into the resume — use it only to inform what real experience to surface.`
+      : '';
+
     const userPrompt = `Job Description:
 ${jobText}
 
 Resume:
-${resumeText}${linksContext}
+${resumeText}${linksContext}${coverLetterContext}
 
 Parse the given resume text into the requested structure, using the job description to decide what to emphasize and reorder. Never fabricate missing sections (e.g. if there are no certifications in the original resume, return an empty array, don't invent any). Analyze the match and provide the exact JSON response.`;
 

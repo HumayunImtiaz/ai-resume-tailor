@@ -26,7 +26,7 @@ export const initializeTailorWorker = () => {
       }
 
       // Run real AI analysis
-      const aiResult = await analyzeMatch(resume.rawText, jobDescription.rawText, (resume.links as any) || []);
+      const aiResult = await analyzeMatch(resume.rawText, jobDescription.rawText, (resume.links as any) || [], job.data.coverLetterText);
 
       let matchScore: number;
       let missingKeywords: string[];

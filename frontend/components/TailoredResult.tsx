@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { CheckCircle2, Copy, Check, Download } from "lucide-react";
+import { CheckCircle2, Copy, Check, Download, FileText } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 
 interface TailoredResultProps {
@@ -15,10 +15,10 @@ interface TailoredResultProps {
   jobDescriptionId: string | null;
 }
 
-/** Renders a single section heading in the draft panel */
+/** Renders a section heading in the resume paper preview */
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h4 className="text-xs font-bold uppercase tracking-wider text-ink-navy/40 mt-5 mb-2 first:mt-0 border-b border-ink-navy/5 pb-1">
+    <h4 className="text-xs font-bold uppercase tracking-widest text-ink-navy/70 border-b border-ink-navy/15 pb-1.5 mb-3 mt-6 first:mt-0">
       {children}
     </h4>
   );
@@ -58,7 +58,7 @@ export default function TailoredResult({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "Tailored_Draft.txt";
+    a.download = "Tailored_Resume.txt";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -85,7 +85,7 @@ export default function TailoredResult({
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "Tailored_Draft.docx";
+      a.download = "Tailored_Resume.docx";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -98,48 +98,62 @@ export default function TailoredResult({
   };
 
   return (
-    <div className="w-full max-w-lg space-y-4">
+    <div className="w-full max-w-[900px] space-y-8 md:space-y-10 mx-auto">
       {/* ── Fit Score Card ── */}
-      <div className="p-6 rounded-2xl bg-white border border-ink-navy/5 shadow-[0_2px_12px_rgb(0,0,0,0.03)]">
-        <div className="flex items-start justify-between mb-3">
-          <h3 className="font-fraunces text-lg font-semibold text-ink-navy">Fit Score</h3>
+      <div className="p-8 rounded-3xl bg-white/90 backdrop-blur-xl border border-ink-navy/10 shadow-[0_4px_25px_rgba(0,0,0,0.03)]">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h3 className="font-fraunces text-xl font-bold text-ink-navy">Fit Score Analysis</h3>
+            <p className="text-ink-navy/50 text-xs mt-0.5">
+              Resume keyword & requirement coverage for target position
+            </p>
+          </div>
           {matchScore !== null && (
-            <span className="text-2xl font-bold text-ink-navy" style={{ fontVariantNumeric: "tabular-nums" }}>
+            <span
+              className="text-3xl font-bold text-ink-navy tracking-tight"
+              style={{ fontVariantNumeric: "tabular-nums" }}
+            >
               {matchScore}%
             </span>
           )}
         </div>
-        <div className="w-full h-3 rounded-full bg-ink-navy/5 overflow-hidden">
+        <div className="w-full h-3.5 rounded-full bg-ink-navy/5 overflow-hidden p-0.5 border border-ink-navy/5">
           <div
             className="h-full rounded-full transition-all duration-700 ease-out"
             style={{
               width: matchScore !== null ? `${matchScore}%` : "0%",
-              backgroundColor: "#E8A33D",
+              backgroundColor: matchScore && matchScore >= 75 ? "#10B981" : matchScore && matchScore >= 50 ? "#E8A33D" : "#EF4444",
             }}
           />
         </div>
-        <p className="text-ink-navy/50 text-xs mt-2">
+        <p className="text-ink-navy/60 text-xs mt-3 font-semibold">
           {matchScore === null
             ? "Score unavailable"
             : matchScore >= 80
-            ? "✦ Strong match"
+            ? "✦ Strong match — resume is highly aligned with job requirements."
             : matchScore >= 50
-            ? "◎ Good match, some gaps"
-            : "△ Needs significant tailoring"}
+            ? "◎ Good match — essential keywords incorporated with minor gaps."
+            : "△ Needs significant tailoring — key missing qualifications noted below."}
         </p>
       </div>
 
-      {/* ── Missing Keywords ── */}
-      <div className="p-6 rounded-2xl bg-white border border-ink-navy/5 shadow-[0_2px_12px_rgb(0,0,0,0.03)]">
-        <h3 className="font-fraunces text-lg font-semibold text-ink-navy mb-3">Missing Keywords</h3>
+      {/* ── Missing Keywords Card ── */}
+      <div className="p-8 rounded-3xl bg-white/90 backdrop-blur-xl border border-ink-navy/10 shadow-[0_4px_25px_rgba(0,0,0,0.03)]">
+        <h3 className="font-fraunces text-xl font-bold text-ink-navy mb-1">Missing Keywords</h3>
+        <p className="text-ink-navy/50 text-xs mb-4">
+          Important terms from the job description not present in the base resume
+        </p>
         {missingKeywords.length === 0 ? (
-          <p className="text-emerald-600 text-sm font-medium">✓ No major gaps found!</p>
+          <p className="text-emerald-600 text-sm font-semibold flex items-center gap-1.5">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+            No major gap keywords found — excellent coverage!
+          </p>
         ) : (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2.5">
             {missingKeywords.map((kw) => (
               <span
                 key={kw}
-                className="px-3 py-1 rounded-full bg-amber/10 text-ink-navy text-xs font-medium border border-amber/20"
+                className="px-3.5 py-1.5 rounded-xl bg-amber/10 text-ink-navy text-xs font-semibold border border-amber/25 shadow-sm"
               >
                 {kw}
               </span>
@@ -148,15 +162,24 @@ export default function TailoredResult({
         )}
       </div>
 
-      {/* ── Tailored Draft ── */}
-      <div className="p-6 rounded-2xl bg-white border border-ink-navy/5 shadow-[0_2px_12px_rgb(0,0,0,0.03)]">
-        <div className="flex items-center justify-between mb-1">
-          <h3 className="font-fraunces text-lg font-semibold text-ink-navy">Tailored Draft</h3>
+      {/* ── Tailored Resume Preview Section ── */}
+      <div className="p-8 rounded-3xl bg-white/90 backdrop-blur-xl border border-ink-navy/10 shadow-[0_4px_25px_rgba(0,0,0,0.03)]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-ink-navy/10">
+          <div>
+            <h3 className="font-fraunces text-xl font-bold text-ink-navy flex items-center gap-2">
+              <FileText className="w-5 h-5 text-amber" />
+              Tailored Resume Draft
+            </h3>
+            <p className="text-ink-navy/50 text-xs mt-0.5">
+              ATS-optimized physical page preview
+            </p>
+          </div>
+
           {plainText && (
-            <div className="flex gap-2 relative">
+            <div className="flex items-center gap-2 self-start sm:self-auto relative">
               <button
                 onClick={handleCopy}
-                className="p-1.5 rounded-md hover:bg-ink-navy/5 text-ink-navy/60 hover:text-ink-navy transition-colors flex items-center gap-1.5 text-xs font-medium"
+                className="px-3.5 py-2 rounded-xl border border-ink-navy/15 bg-white text-ink-navy hover:bg-ink-navy hover:text-white transition-all flex items-center gap-1.5 text-xs font-bold shadow-sm"
                 title="Copy to clipboard"
               >
                 {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
@@ -164,7 +187,7 @@ export default function TailoredResult({
               </button>
               <button
                 onClick={handleDownloadTxt}
-                className="p-1.5 rounded-md hover:bg-ink-navy/5 text-ink-navy/60 hover:text-ink-navy transition-colors flex items-center gap-1.5 text-xs font-medium"
+                className="px-3.5 py-2 rounded-xl border border-ink-navy/15 bg-white text-ink-navy hover:bg-ink-navy hover:text-white transition-all flex items-center gap-1.5 text-xs font-bold shadow-sm"
                 title="Download as .txt"
               >
                 <Download className="w-3.5 h-3.5" />
@@ -174,18 +197,15 @@ export default function TailoredResult({
                 <button
                   onClick={handleDownloadDocx}
                   disabled={isDownloadingDocx}
-                  className="p-1.5 rounded-md hover:bg-ink-navy/5 text-ink-navy/60 hover:text-ink-navy transition-colors flex items-center gap-1.5 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Download as .docx"
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber to-orange-400 text-ink-navy hover:shadow-md transition-all flex items-center gap-1.5 text-xs font-bold disabled:opacity-50 shadow-sm"
+                  title="Download as formatted .docx"
                 >
                   {isDownloadingDocx ? (
-                    <svg className="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
+                    <div className="w-3.5 h-3.5 border-2 border-ink-navy border-t-transparent rounded-full animate-spin" />
                   ) : (
                     <Download className="w-3.5 h-3.5" />
                   )}
-                  .docx
+                  Export DOCX
                 </button>
               )}
               {downloadError && (
@@ -196,13 +216,17 @@ export default function TailoredResult({
             </div>
           )}
         </div>
+
+        {/* ── Document "Paper" Sheet Card ── */}
         {tailoredResume ? (
-          <div className="mt-3 p-4 rounded-xl bg-ink-navy/[0.02] border border-ink-navy/10 max-h-[400px] overflow-y-auto text-sm text-ink-navy/80 leading-relaxed">
-            {renderStructuredResume(tailoredResume)}
+          <div className="bg-white border border-ink-navy/15 rounded-[6px] shadow-[0_12px_40px_rgba(0,0,0,0.08)] p-8 sm:p-12 md:p-14 max-w-[680px] mx-auto text-ink-navy font-sans leading-relaxed">
+            <div className="max-h-[650px] overflow-y-auto pr-3 scrollbar-thin scrollbar-thumb-ink-navy/20">
+              {renderStructuredResume(tailoredResume)}
+            </div>
           </div>
         ) : (
-          <div className="mt-3 p-4 rounded-xl bg-ink-navy/[0.02] border border-dashed border-ink-navy/10 min-h-[80px] flex items-center justify-center">
-            <p className="text-ink-navy/30 text-sm text-center">Your optimized resume text will appear here</p>
+          <div className="p-12 rounded-2xl bg-ink-navy/[0.02] border border-dashed border-ink-navy/15 min-h-[140px] flex items-center justify-center">
+            <p className="text-ink-navy/40 text-sm text-center">Your optimized resume draft will appear here</p>
           </div>
         )}
       </div>
@@ -212,20 +236,54 @@ export default function TailoredResult({
 
 /* ─── Helpers ─── */
 
-/** Pretty-render the structured resume object as React elements */
+/** Pretty-render structured resume object into a professional paper document layout */
 function renderStructuredResume(r: any): React.ReactNode {
   if (!r || typeof r !== "object") {
-    return <p className="whitespace-pre-wrap">{String(r ?? "")}</p>;
+    return <p className="whitespace-pre-wrap font-sans text-sm">{String(r ?? "")}</p>;
   }
 
   const sections: React.ReactNode[] = [];
 
-  // Header
-  if (r.fullName) {
+  // Header & Contact Info
+  const fullName = r.fullName || r.name;
+  const title = r.title || r.professionalTitle;
+  const contact = r.contactLine;
+
+  if (fullName || title || contact) {
+    const contactItems: string[] = [];
+    if (contact?.email) contactItems.push(contact.email);
+    if (contact?.phone) contactItems.push(contact.phone);
+    if (contact?.location) contactItems.push(contact.location);
+    if (Array.isArray(contact?.links)) {
+      for (const link of contact.links) {
+        if (link.label) contactItems.push(link.url ? `${link.label}: ${link.url}` : link.label);
+      }
+    }
+
     sections.push(
-      <div key="header" className="mb-1">
-        <p className="text-ink-navy font-bold text-base">{r.fullName}</p>
-        {r.title && <p className="text-ink-navy/60 text-xs font-medium">{r.title}</p>}
+      <div key="header" className="text-center sm:text-left mb-6">
+        {fullName && (
+          <h1 className="font-fraunces text-2xl sm:text-[26px] font-bold text-ink-navy tracking-tight leading-tight mb-1">
+            {fullName}
+          </h1>
+        )}
+        {title && (
+          <p className="text-sm font-semibold text-ink-navy/60 mb-2">
+            {title}
+          </p>
+        )}
+        {contactItems.length > 0 && (
+          <p className="text-xs text-ink-navy/60 flex flex-wrap items-center justify-center sm:justify-start gap-x-2.5 gap-y-1 mt-1.5 font-medium">
+            {contactItems.map((item, idx) => (
+              <React.Fragment key={idx}>
+                {idx > 0 && <span className="text-ink-navy/30">•</span>}
+                <span>{item}</span>
+              </React.Fragment>
+            ))}
+          </p>
+        )}
+        {/* Thin horizontal divider matching docx layout */}
+        <div className="border-b border-ink-navy/15 mt-4" />
       </div>
     );
   }
@@ -234,8 +292,8 @@ function renderStructuredResume(r: any): React.ReactNode {
   if (r.summary) {
     sections.push(
       <div key="summary">
-        <SectionHeading>Summary</SectionHeading>
-        <p className="text-sm text-ink-navy/70">{r.summary}</p>
+        <SectionHeading>Professional Summary</SectionHeading>
+        <p className="text-xs sm:text-sm text-ink-navy/85 leading-relaxed">{r.summary}</p>
       </div>
     );
   }
@@ -244,10 +302,13 @@ function renderStructuredResume(r: any): React.ReactNode {
   if (r.skills && Array.isArray(r.skills) && r.skills.length > 0) {
     sections.push(
       <div key="skills">
-        <SectionHeading>Skills</SectionHeading>
-        <div className="flex flex-wrap gap-1.5">
+        <SectionHeading>Skills & Core Competencies</SectionHeading>
+        <div className="flex flex-wrap gap-2">
           {r.skills.map((s: string, i: number) => (
-            <span key={i} className="px-2 py-0.5 text-xs bg-ink-navy/5 rounded text-ink-navy/70 border border-ink-navy/5">
+            <span
+              key={i}
+              className="px-2.5 py-1 text-xs font-semibold bg-ink-navy/5 text-ink-navy/80 rounded-md border border-ink-navy/10"
+            >
               {s}
             </span>
           ))}
@@ -260,19 +321,36 @@ function renderStructuredResume(r: any): React.ReactNode {
   if (r.experience && Array.isArray(r.experience) && r.experience.length > 0) {
     sections.push(
       <div key="experience">
-        <SectionHeading>Experience</SectionHeading>
-        <div className="space-y-3">
+        <SectionHeading>Professional Experience</SectionHeading>
+        <div className="space-y-5">
           {r.experience.map((exp: any, i: number) => (
             <div key={i}>
-              <p className="text-ink-navy font-semibold text-sm">
-                {exp.jobTitle || exp.title}
-                {exp.company && <span className="text-ink-navy/50 font-normal"> · {exp.company}</span>}
-              </p>
-              {exp.dates && <p className="text-[11px] text-ink-navy/40">{exp.dates}</p>}
-              {exp.bullets && Array.isArray(exp.bullets) && (
-                <ul className="list-disc list-inside mt-1 space-y-0.5">
+              <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-1.5">
+                <div>
+                  <span className="font-bold text-sm text-ink-navy">
+                    {exp.role || exp.jobTitle || exp.title}
+                  </span>
+                  {exp.company && (
+                    <span className="text-ink-navy/60 font-medium text-xs sm:text-sm">
+                      {" "}— {exp.company}
+                    </span>
+                  )}
+                </div>
+                {exp.dates && (
+                  <span className="text-xs font-semibold text-ink-navy/50 whitespace-nowrap">
+                    {exp.dates}
+                  </span>
+                )}
+              </div>
+              {exp.location && (
+                <p className="text-[11px] text-ink-navy/40 font-medium mb-1">{exp.location}</p>
+              )}
+              {exp.bullets && Array.isArray(exp.bullets) && exp.bullets.length > 0 && (
+                <ul className="list-disc pl-5 space-y-1.5 mt-2">
                   {exp.bullets.map((b: string, j: number) => (
-                    <li key={j} className="text-xs text-ink-navy/70">{b}</li>
+                    <li key={j} className="text-xs sm:text-sm text-ink-navy/80 leading-relaxed">
+                      {b}
+                    </li>
                   ))}
                 </ul>
               )}
@@ -288,14 +366,24 @@ function renderStructuredResume(r: any): React.ReactNode {
     sections.push(
       <div key="education">
         <SectionHeading>Education</SectionHeading>
-        <div className="space-y-2">
+        <div className="space-y-3">
           {r.education.map((edu: any, i: number) => (
-            <div key={i}>
-              <p className="text-ink-navy font-semibold text-sm">
-                {edu.degree || edu.title}
-                {edu.institution && <span className="text-ink-navy/50 font-normal"> · {edu.institution}</span>}
-              </p>
-              {edu.dates && <p className="text-[11px] text-ink-navy/40">{edu.dates}</p>}
+            <div key={i} className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+              <div>
+                <span className="font-bold text-sm text-ink-navy">
+                  {edu.degree || edu.title}
+                </span>
+                {edu.school && (
+                  <span className="text-ink-navy/60 font-medium text-xs sm:text-sm">
+                    {" "}— {edu.school}
+                  </span>
+                )}
+              </div>
+              {edu.dates && (
+                <span className="text-xs font-semibold text-ink-navy/50 whitespace-nowrap">
+                  {edu.dates}
+                </span>
+              )}
             </div>
           ))}
         </div>
@@ -308,15 +396,19 @@ function renderStructuredResume(r: any): React.ReactNode {
     sections.push(
       <div key="projects">
         <SectionHeading>Projects</SectionHeading>
-        <div className="space-y-3">
+        <div className="space-y-4">
           {r.projects.map((proj: any, i: number) => (
             <div key={i}>
-              <p className="text-ink-navy font-semibold text-sm">{proj.name || proj.title}</p>
-              {proj.description && <p className="text-xs text-ink-navy/60 mt-0.5">{proj.description}</p>}
-              {proj.bullets && Array.isArray(proj.bullets) && (
-                <ul className="list-disc list-inside mt-1 space-y-0.5">
+              <p className="font-bold text-sm text-ink-navy">{proj.name || proj.title}</p>
+              {proj.description && (
+                <p className="text-xs text-ink-navy/70 mt-0.5">{proj.description}</p>
+              )}
+              {proj.bullets && Array.isArray(proj.bullets) && proj.bullets.length > 0 && (
+                <ul className="list-disc pl-5 space-y-1.5 mt-1.5">
                   {proj.bullets.map((b: string, j: number) => (
-                    <li key={j} className="text-xs text-ink-navy/70">{b}</li>
+                    <li key={j} className="text-xs sm:text-sm text-ink-navy/80 leading-relaxed">
+                      {b}
+                    </li>
                   ))}
                 </ul>
               )}
@@ -332,9 +424,11 @@ function renderStructuredResume(r: any): React.ReactNode {
     sections.push(
       <div key="certs">
         <SectionHeading>Certifications</SectionHeading>
-        <ul className="list-disc list-inside space-y-0.5">
+        <ul className="list-disc pl-5 space-y-1">
           {r.certifications.map((c: string, i: number) => (
-            <li key={i} className="text-xs text-ink-navy/70">{c}</li>
+            <li key={i} className="text-xs sm:text-sm text-ink-navy/80 font-medium">
+              {c}
+            </li>
           ))}
         </ul>
       </div>
@@ -342,10 +436,10 @@ function renderStructuredResume(r: any): React.ReactNode {
   }
 
   if (sections.length === 0) {
-    return <p className="whitespace-pre-wrap">{JSON.stringify(r, null, 2)}</p>;
+    return <p className="whitespace-pre-wrap font-sans text-sm">{JSON.stringify(r, null, 2)}</p>;
   }
 
-  return <div className="space-y-1">{sections}</div>;
+  return <div className="space-y-3">{sections}</div>;
 }
 
 /** Build a plain-text representation from the structured resume for copy/download */
@@ -354,22 +448,34 @@ function buildPlainText(r: any): string {
 
   const lines: string[] = [];
 
-  if (r.fullName) lines.push(r.fullName);
-  if (r.title) lines.push(r.title);
-  if (r.fullName || r.title) lines.push("");
+  const fullName = r.fullName || r.name;
+  const title = r.title || r.professionalTitle;
+
+  if (fullName) lines.push(fullName);
+  if (title) lines.push(title);
+
+  if (r.contactLine) {
+    const contactParts: string[] = [];
+    if (r.contactLine.email) contactParts.push(r.contactLine.email);
+    if (r.contactLine.phone) contactParts.push(r.contactLine.phone);
+    if (r.contactLine.location) contactParts.push(r.contactLine.location);
+    if (contactParts.length) lines.push(contactParts.join(" | "));
+  }
+
+  if (fullName || title) lines.push("");
 
   if (r.summary) {
-    lines.push("SUMMARY", r.summary, "");
+    lines.push("PROFESSIONAL SUMMARY", r.summary, "");
   }
 
   if (r.skills?.length) {
-    lines.push("SKILLS", r.skills.join(", "), "");
+    lines.push("SKILLS & CORE COMPETENCIES", r.skills.join(", "), "");
   }
 
   if (r.experience?.length) {
-    lines.push("EXPERIENCE");
+    lines.push("PROFESSIONAL EXPERIENCE");
     for (const exp of r.experience) {
-      const header = [exp.jobTitle || exp.title, exp.company].filter(Boolean).join(" · ");
+      const header = [exp.role || exp.jobTitle || exp.title, exp.company].filter(Boolean).join(" — ");
       if (header) lines.push(header);
       if (exp.dates) lines.push(exp.dates);
       if (exp.bullets?.length) {
@@ -382,7 +488,7 @@ function buildPlainText(r: any): string {
   if (r.education?.length) {
     lines.push("EDUCATION");
     for (const edu of r.education) {
-      const header = [edu.degree || edu.title, edu.institution].filter(Boolean).join(" · ");
+      const header = [edu.degree || edu.title, edu.school || edu.institution].filter(Boolean).join(" — ");
       if (header) lines.push(header);
       if (edu.dates) lines.push(edu.dates);
       lines.push("");

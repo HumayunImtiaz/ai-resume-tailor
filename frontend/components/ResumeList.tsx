@@ -64,18 +64,18 @@ export default function ResumeList({ refreshKey }: ResumeListProps) {
             const vRes = await apiFetch(`/api/resumes/${r.id}/versions`);
             const vJson = await vRes.json();
             const versions: TailoredVersion[] = vJson.data || [];
-            return [r.id, versions.length, versions] as const;
+            return { id: r.id, count: versions.length, versions };
           } catch {
-            return [r.id, 0, []] as const;
+            return { id: r.id, count: 0, versions: [] as TailoredVersion[] };
           }
         })
       );
 
       const counts: Record<string, number> = {};
       const vMap: Record<string, TailoredVersion[]> = {};
-      for (const [id, count, versions] of countEntries) {
-        counts[id] = count;
-        vMap[id] = versions;
+      for (const item of countEntries) {
+        counts[item.id] = item.count;
+        vMap[item.id] = item.versions;
       }
       setVersionCounts(counts);
       setVersionsMap(vMap);

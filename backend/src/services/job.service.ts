@@ -8,6 +8,7 @@ interface CreateJobInput {
   title: string;
   company?: string;
   rawText: string;
+  coverLetterText?: string;
 }
 
 export const jobService = {
@@ -43,6 +44,7 @@ export const jobService = {
         userId,
         resumeId: data.resumeId,
         jobDescriptionId: jobDescription.id,
+        coverLetterText: data.coverLetterText,
       });
 
       return {
