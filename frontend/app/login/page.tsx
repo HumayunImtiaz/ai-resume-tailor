@@ -33,7 +33,7 @@ export default function LoginPage() {
         router.push('/dashboard');
       }
     } catch (err: any) {
-      const msg = err.message || 'An error occurred during login';
+      const msg = err.message || 'An error occurerror during login';
       if (msg.toLowerCase().includes('email')) {
         setFieldErrors({ email: msg });
       } else if (msg.toLowerCase().includes('password')) {
@@ -49,12 +49,12 @@ export default function LoginPage() {
   return (
     <AuthLayout linkText="New here? Create an account" linkHref="/signup">
       <div className="mb-8">
-        <h1 className="text-3xl font-fraunces font-semibold text-ink-navy mb-2">Welcome back</h1>
-        <p className="text-ink-navy/60 text-sm">Please enter your details to sign in.</p>
+        <h1 className="text-3xl font-fraunces font-semibold text-heading mb-2">Welcome back</h1>
+        <p className="text-body text-sm">Please enter your details to sign in.</p>
       </div>
       
       {error && (
-        <div className="mb-6 p-4 rounded-lg bg-red-50 border border-red-100 text-red-600 text-sm font-medium">
+        <div className="mb-6 p-4 rounded-lg bg-error/10 border border-error/20 text-error text-sm font-medium">
           {error}
         </div>
       )}
@@ -82,7 +82,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full h-12 mt-4 bg-ink-navy text-parchment rounded-lg font-medium hover:bg-amber hover:text-ink-navy transition-colors focus:outline-none focus:ring-2 focus:ring-amber focus:ring-offset-2 flex justify-center items-center disabled:opacity-70 disabled:hover:bg-ink-navy disabled:hover:text-parchment"
+          className="w-full h-12 mt-4 bg-heading text-card rounded-lg font-medium hover:bg-primary hover:text-heading transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 flex justify-center items-center disabled:opacity-70 disabled:hover:bg-heading disabled:hover:text-card"
         >
           {isLoading ? (
              <svg className="animate-spin h-5 w-5 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

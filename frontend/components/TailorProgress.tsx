@@ -41,24 +41,24 @@ export default function TailorProgress({ state }: TailorProgressProps) {
     <div className="w-full">
       {/* Document silhouette with scan line — echoes the login motif */}
       <div className="flex justify-center mb-10">
-        <div className="relative w-44 h-56 border-2 border-ink-navy/15 rounded-xl bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col p-5 gap-3 overflow-hidden">
+        <div className="relative w-44 h-56 border-2 border-heading/15 rounded-xl bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col p-5 gap-3 overflow-hidden">
           {/* Skeleton lines */}
-          <div className="w-full h-6 bg-ink-navy/5 rounded" />
-          <div className="w-3/4 h-2 bg-ink-navy/5 rounded" />
-          <div className="w-full h-2 bg-ink-navy/5 rounded" />
-          <div className="w-5/6 h-2 bg-ink-navy/5 rounded" />
-          <div className="w-2/3 h-2 bg-ink-navy/5 rounded" />
-          <div className="w-full h-8 bg-ink-navy/5 rounded mt-auto" />
+          <div className="w-full h-6 bg-heading/5 rounded" />
+          <div className="w-3/4 h-2 bg-heading/5 rounded" />
+          <div className="w-full h-2 bg-heading/5 rounded" />
+          <div className="w-5/6 h-2 bg-heading/5 rounded" />
+          <div className="w-2/3 h-2 bg-heading/5 rounded" />
+          <div className="w-full h-8 bg-heading/5 rounded mt-auto" />
 
           {/* Animated scan line */}
           {!isComplete && (
-            <div className="absolute left-0 right-0 h-1 bg-amber shadow-[0_0_16px_6px_#E8A33D] motion-safe:animate-scan z-10" />
+            <div className="absolute left-0 right-0 h-1 bg-primary shadow-[0_0_16px_6px_#E8A33D] motion-safe:animate-scan z-10" />
           )}
 
           {/* Completed overlay */}
           {isComplete && (
-            <div className="absolute inset-0 bg-emerald-50/80 flex items-center justify-center">
-              <CheckCircle2 className="w-12 h-12 text-emerald-500" />
+            <div className="absolute inset-0 bg-success-50/80 flex items-center justify-center">
+              <CheckCircle2 className="w-12 h-12 text-success" />
             </div>
           )}
         </div>
@@ -77,10 +77,10 @@ export default function TailorProgress({ state }: TailorProgressProps) {
               className={`
                 flex items-center gap-4 px-5 py-3.5 rounded-xl border transition-all duration-500
                 ${isCurrent
-                  ? "bg-amber/10 border-amber/30 shadow-[0_0_20px_rgb(232,163,61,0.1)]"
+                  ? "bg-primary/10 border-primary/30 shadow-[0_0_20px_rgb(232,163,61,0.1)]"
                   : isDone
-                    ? "bg-emerald-50/60 border-emerald-200/50"
-                    : "bg-white border-ink-navy/5"
+                    ? "bg-success-50/60 border-success-200/50"
+                    : "bg-white border-heading/5"
                 }
               `}
             >
@@ -89,18 +89,18 @@ export default function TailorProgress({ state }: TailorProgressProps) {
                 className={`
                   w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-500
                   ${isCurrent
-                    ? "bg-amber/20"
+                    ? "bg-primary/20"
                     : isDone
-                      ? "bg-emerald-100"
-                      : "bg-ink-navy/5"
+                      ? "bg-success/10"
+                      : "bg-heading/5"
                   }
                 `}
               >
                 {isDone ? (
-                  <CheckCircle2 className="w-4.5 h-4.5 text-emerald-500" />
+                  <CheckCircle2 className="w-4.5 h-4.5 text-success" />
                 ) : (
                   <Icon
-                    className={`w-4.5 h-4.5 transition-colors duration-500 ${isCurrent ? "text-amber" : "text-ink-navy/30"}`}
+                    className={`w-4.5 h-4.5 transition-colors duration-500 ${isCurrent ? "text-primary" : "text-body"}`}
                   />
                 )}
               </div>
@@ -109,10 +109,10 @@ export default function TailorProgress({ state }: TailorProgressProps) {
               <span
                 className={`text-sm font-medium transition-colors duration-500 ${
                   isCurrent
-                    ? "text-ink-navy"
+                    ? "text-heading"
                     : isDone
-                      ? "text-emerald-700"
-                      : "text-ink-navy/40"
+                      ? "text-success-700"
+                      : "text-body"
                 }`}
               >
                 {step.label}
@@ -121,8 +121,8 @@ export default function TailorProgress({ state }: TailorProgressProps) {
               {/* Pulse dot for the current step */}
               {isCurrent && (
                 <span className="ml-auto relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber/60" />
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/60" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary" />
                 </span>
               )}
             </div>

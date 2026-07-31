@@ -30,9 +30,9 @@ interface ResumeListProps {
 
 /** Returns Tailwind classes for the score badge based on value. */
 function scoreBadgeClasses(score: number): string {
-  if (score >= 75) return "bg-emerald-50 text-emerald-700 border-emerald-200";
-  if (score >= 50) return "bg-amber-50 text-amber-700 border-amber-200";
-  return "bg-red-50 text-red-600 border-red-200";
+  if (score >= 75) return "bg-success-50 text-success-700 border-success-200";
+  if (score >= 50) return "bg-primary-50 text-primary-700 border-primary-200";
+  return "bg-error/10 text-error border-error-200";
 }
 
 export default function ResumeList({ refreshKey }: ResumeListProps) {
@@ -157,7 +157,7 @@ export default function ResumeList({ refreshKey }: ResumeListProps) {
 
   if (error) {
     return (
-      <div className="p-4 rounded-[20px] bg-red-50 border border-red-100 text-red-600 text-sm font-medium">
+      <div className="p-4 rounded-[20px] bg-error/10 border border-error/20 text-error text-sm font-medium">
         Error: {error}
       </div>
     );
@@ -169,7 +169,7 @@ export default function ResumeList({ refreshKey }: ResumeListProps) {
         <div className="w-16 h-16 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center mb-4">
           <FileText className="w-6 h-6 text-gray-400" />
         </div>
-        <p className="text-ink-navy font-bold text-lg mb-1">Your Library is Empty</p>
+        <p className="text-heading font-bold text-lg mb-1">Your Library is Empty</p>
         <p className="text-gray-500 text-sm max-w-[250px]">Drop your first document on the left to ignite the engine.</p>
       </div>
     );
@@ -195,16 +195,16 @@ export default function ResumeList({ refreshKey }: ResumeListProps) {
               `}
             >
               {/* Subtle Hover Glow */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-amber/10 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
 
               <div className="flex items-center justify-between p-4">
                 {/* Left Side: Info */}
                 <div className="flex items-center gap-4 min-w-0 pr-4">
-                  <div className="w-12 h-12 rounded-[14px] border border-gray-100 bg-gray-50 flex items-center justify-center flex-shrink-0 text-gray-400 group-hover:text-amber group-hover:bg-amber/5 group-hover:border-amber/20 transition-all duration-300">
+                  <div className="w-12 h-12 rounded-[14px] border border-gray-100 bg-gray-50 flex items-center justify-center flex-shrink-0 text-gray-400 group-hover:text-primary group-hover:bg-primary/5 group-hover:border-primary/20 transition-all duration-300">
                     <FileText className="w-5 h-5" />
                   </div>
                   <div className="min-w-0 flex flex-col">
-                    <Link href={`/dashboard/tailor?resumeId=${resume.id}`} className="text-ink-navy font-bold text-[15px] truncate hover:text-amber transition-colors">
+                    <Link href={`/dashboard/tailor?resumeId=${resume.id}`} className="text-heading font-bold text-[15px] truncate hover:text-primary transition-colors">
                       {resume.originalFilename}
                     </Link>
                     <div className="flex items-center gap-1.5 text-gray-500 text-[13px] mt-0.5 font-medium">
@@ -218,7 +218,7 @@ export default function ResumeList({ refreshKey }: ResumeListProps) {
                 <div className="flex items-center gap-2 relative z-10">
                   <Link
                     href={`/dashboard/tailor?resumeId=${resume.id}`}
-                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber to-orange-400 rounded-xl text-white text-sm font-bold shadow-[0_4px_15px_rgba(232,163,61,0.3)] hover:shadow-[0_6px_20px_rgba(232,163,61,0.4)] transition-all hover:-translate-y-0.5"
+                    className="flex items-center gap-2 px-4 py-2 bg-primary text-card hover:bg-primary-hover transition-colors font-bold text-base flex items-center justify-center gap-2"
                   >
                     Tailor
                     <ArrowRight className="w-4 h-4" />
@@ -227,11 +227,11 @@ export default function ResumeList({ refreshKey }: ResumeListProps) {
                   <button
                     onClick={(e) => handleDelete(resume.id, e)}
                     disabled={deletingId === resume.id}
-                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                    className="p-2 text-gray-400 hover:text-error hover:bg-error/10 rounded-xl transition-all"
                     title="Delete resume"
                   >
                     {deletingId === resume.id ? (
-                      <div className="w-5 h-5 border-2 border-red-500 border-t-transparent rounded-full animate-[spin_0.8s_linear_infinite]" />
+                      <div className="w-5 h-5 border-2 border-error border-t-transparent rounded-full animate-[spin_0.8s_linear_infinite]" />
                     ) : (
                       <Trash2 className="w-5 h-5" />
                     )}
@@ -243,7 +243,7 @@ export default function ResumeList({ refreshKey }: ResumeListProps) {
               {count !== null && count > 0 && (
                 <button
                   onClick={() => toggleExpand(resume.id)}
-                  className="flex items-center gap-2 px-5 pb-3.5 pt-0.5 text-[13px] font-semibold text-ink-navy/50 hover:text-amber transition-colors group/toggle"
+                  className="flex items-center gap-2 px-5 pb-3.5 pt-0.5 text-[13px] font-semibold text-body hover:text-primary transition-colors group/toggle"
                 >
                   <History className="w-3.5 h-3.5" />
                   <span>
@@ -272,7 +272,7 @@ export default function ResumeList({ refreshKey }: ResumeListProps) {
               >
                 {isLoadingVersions ? (
                   <div className="flex items-center justify-center py-6 gap-2 text-sm text-gray-400">
-                    <div className="w-4 h-4 border-2 border-amber border-t-transparent rounded-full animate-[spin_0.8s_linear_infinite]" />
+                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-[spin_0.8s_linear_infinite]" />
                     Loading versions…
                   </div>
                 ) : versions.length === 0 ? (
@@ -296,7 +296,7 @@ export default function ResumeList({ refreshKey }: ResumeListProps) {
                           </span>
 
                           <div className="min-w-0 flex flex-col">
-                            <span className="text-ink-navy text-[13px] font-semibold truncate">
+                            <span className="text-heading text-[13px] font-semibold truncate">
                               {version.jobDescription.title}
                               {version.jobDescription.company && (
                                 <span className="text-gray-400 font-medium"> · {version.jobDescription.company}</span>
@@ -311,7 +311,7 @@ export default function ResumeList({ refreshKey }: ResumeListProps) {
                         {/* View Button */}
                         <button
                           onClick={() => router.push(`/dashboard/tailor/result/${version.id}`)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-bold text-ink-navy/60 hover:text-amber bg-white border border-gray-100 hover:border-amber/30 rounded-lg shadow-sm hover:shadow transition-all"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-bold text-body hover:text-primary bg-white border border-gray-100 hover:border-primary/30 rounded-lg shadow-sm hover:shadow transition-all"
                         >
                           <Eye className="w-3.5 h-3.5" />
                           View

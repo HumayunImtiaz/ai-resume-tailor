@@ -165,8 +165,8 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center py-16">
-        <div className="w-10 h-10 border-4 border-amber border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-ink-navy/50 text-sm font-medium">Loading dashboard...</p>
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-body text-sm font-medium">Loading dashboard...</p>
       </div>
     );
   }
@@ -176,13 +176,13 @@ export default function DashboardPage() {
     return (
       <div className="flex-1 flex flex-col items-center justify-center py-8">
         <div className="w-full max-w-xl bg-white/80 backdrop-blur-xl border border-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 md:p-10 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-amber/10 border border-amber/20 flex items-center justify-center mx-auto mb-5 text-amber">
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto mb-5 text-primary">
             <FileText className="w-8 h-8" />
           </div>
-          <h2 className="font-fraunces text-3xl font-bold text-ink-navy mb-2">
+          <h2 className="font-fraunces text-3xl font-bold text-heading mb-2">
             Upload Your Resume
           </h2>
-          <p className="text-ink-navy/60 text-sm max-w-md mx-auto mb-8">
+          <p className="text-body text-sm max-w-md mx-auto mb-8">
             Upload your base resume to get started. We will analyze and rewrite it for any job description.
           </p>
           <div className="min-h-[260px] flex flex-col">
@@ -201,60 +201,68 @@ export default function DashboardPage() {
         <div className="w-full bg-white/80 backdrop-blur-xl border border-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-10">
           <div className="mb-8">
             <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
-              <h1 className="font-fraunces text-3xl font-bold text-ink-navy">
+              <h1 className="font-fraunces text-3xl font-bold text-heading">
                 Tailor Resume to Job
               </h1>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-ink-navy/5 text-ink-navy/70 text-xs font-semibold">
-                <FileText className="w-3.5 h-3.5 text-amber" />
-                Active: <span className="text-ink-navy font-bold truncate max-w-[180px]">{activeResume.originalFilename}</span>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-heading/5 text-body text-xs font-semibold">
+                <FileText className="w-3.5 h-3.5 text-primary" />
+                Active: <span className="text-heading font-bold truncate max-w-[180px]">{activeResume.originalFilename}</span>
               </div>
             </div>
-            <p className="text-ink-navy/60 text-sm">
+            <p className="text-body text-sm mb-6">
               Paste the target job description below and we&apos;ll craft an optimized version tailored specifically for this role.
             </p>
+
+            {/* Trust & Verification Note */}
+            <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 flex gap-3 items-start md:col-span-2">
+              <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+              <p className="text-sm font-medium text-heading/80 leading-relaxed">
+                <span className="text-primary font-bold">Verified Skills Only:</span> The AI exclusively uses skills present in your uploaded Base Resume and Cover Letter. No fake skills will be added.
+              </p>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Job Title */}
             <div>
-              <label htmlFor="job-title" className="block text-ink-navy font-semibold text-sm mb-1.5">
-                Job Title <span className="text-red-500">*</span>
+              <label htmlFor="job-title" className="block text-heading font-semibold text-sm mb-1.5">
+                Job Title <span className="text-error">*</span>
               </label>
               <div className="relative">
-                <Briefcase className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-navy/40" />
+                <Briefcase className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-body" />
                 <input
                   id="job-title"
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. Senior Frontend Engineer"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-ink-navy/15 bg-white text-ink-navy text-sm placeholder:text-ink-navy/30 focus:outline-none focus:ring-2 focus:ring-amber focus:border-transparent transition-shadow"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-heading/15 bg-white text-heading text-sm placeholder:text-body focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow"
                 />
               </div>
             </div>
 
             {/* Company */}
             <div>
-              <label htmlFor="company" className="block text-ink-navy font-semibold text-sm mb-1.5">
-                Company Name <span className="text-ink-navy/40 font-normal">(optional)</span>
+              <label htmlFor="company" className="block text-heading font-semibold text-sm mb-1.5">
+                Company Name <span className="text-body font-normal">(optional)</span>
               </label>
               <div className="relative">
-                <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-navy/40" />
+                <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-body" />
                 <input
                   id="company"
                   type="text"
                   value={company}
                   onChange={(e) => setCompany(e.target.value)}
                   placeholder="e.g. Google"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-ink-navy/15 bg-white text-ink-navy text-sm placeholder:text-ink-navy/30 focus:outline-none focus:ring-2 focus:ring-amber focus:border-transparent transition-shadow"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-heading/15 bg-white text-heading text-sm placeholder:text-body focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow"
                 />
               </div>
             </div>
 
             {/* Job Description Textarea */}
             <div>
-              <label htmlFor="raw-text" className="block text-ink-navy font-semibold text-sm mb-1.5">
-                Job Description <span className="text-red-500">*</span>
+              <label htmlFor="raw-text" className="block text-heading font-semibold text-sm mb-1.5">
+                Job Description <span className="text-error">*</span>
               </label>
               <textarea
                 id="raw-text"
@@ -262,23 +270,23 @@ export default function DashboardPage() {
                 onChange={(e) => setRawText(e.target.value)}
                 placeholder="Paste the full job description here..."
                 rows={9}
-                className="w-full px-4 py-3 rounded-xl border border-ink-navy/15 bg-white text-ink-navy text-sm placeholder:text-ink-navy/30 focus:outline-none focus:ring-2 focus:ring-amber focus:border-transparent transition-shadow resize-y min-h-[160px]"
+                className="w-full px-4 py-3 rounded-xl border border-heading/15 bg-white text-heading text-sm placeholder:text-body focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow resize-y min-h-[160px]"
               />
               <div className="flex justify-between items-center mt-1.5">
-                <p className={`text-xs ${rawText.length < 20 ? "text-ink-navy/40" : "text-emerald-600 font-medium"}`}>
+                <p className={`text-xs ${rawText.length < 20 ? "text-body" : "text-success font-medium"}`}>
                   {rawText.length < 20
                     ? `${20 - rawText.length} more characters required`
                     : "✓ Length requirement met"}
                 </p>
-                <p className="text-xs text-ink-navy/40">{rawText.length.toLocaleString()} chars</p>
+                <p className="text-xs text-body">{rawText.length.toLocaleString()} chars</p>
               </div>
             </div>
 
 
             {/* Form Error */}
             {formError && (
-              <div className="p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm font-semibold flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 shrink-0 text-red-500" />
+              <div className="p-4 rounded-xl bg-error/10 border border-error/20 text-error text-sm font-semibold flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 text-error" />
                 <span>{formError}</span>
               </div>
             )}
@@ -287,16 +295,16 @@ export default function DashboardPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-4 rounded-xl bg-gradient-to-r from-amber to-orange-400 text-ink-navy font-bold text-base shadow-lg shadow-amber/20 hover:shadow-amber/30 transition-all focus:outline-none focus:ring-2 focus:ring-amber focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-4 rounded-xl bg-primary text-card hover:bg-primary-hover transition-colors font-bold text-base flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
                 <>
-                  <div className="w-5 h-5 border-2 border-ink-navy border-t-transparent rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-heading border-t-transparent rounded-full animate-spin" />
                   Submitting Job...
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-5 h-5 fill-ink-navy/20" />
+                  <Sparkles className="w-5 h-5 fill-heading/20" />
                   Generate Tailored Resume
                 </>
               )}
@@ -309,10 +317,10 @@ export default function DashboardPage() {
       {pageState === "processing" && (
         <div className="w-full bg-white/80 backdrop-blur-xl border border-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 md:p-12 flex flex-col items-center text-center">
           <div className="mb-8">
-            <h2 className="font-fraunces text-3xl font-bold text-ink-navy mb-2">
+            <h2 className="font-fraunces text-3xl font-bold text-heading mb-2">
               Tailoring in Progress
             </h2>
-            <p className="text-ink-navy/60 text-sm">
+            <p className="text-body text-sm">
               Analyzing keywords and rewriting resume bullet points...
             </p>
           </div>
@@ -326,13 +334,13 @@ export default function DashboardPage() {
       {pageState === "completed" && (
         <div className="w-full flex flex-col items-center">
           <div className="mb-8 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-100 border border-emerald-200 flex items-center justify-center mx-auto mb-4 text-emerald-600 shadow-sm">
+            <div className="w-14 h-14 rounded-2xl bg-success/10 border border-success-200 flex items-center justify-center mx-auto mb-4 text-success shadow-sm">
               <CheckCircle2 className="w-7 h-7" />
             </div>
-            <h2 className="font-fraunces text-3xl font-bold text-ink-navy mb-2">
+            <h2 className="font-fraunces text-3xl font-bold text-heading mb-2">
               Your Tailored Resume is Ready!
             </h2>
-            <p className="text-ink-navy/60 text-sm max-w-md mx-auto">
+            <p className="text-body text-sm max-w-md mx-auto">
               Review your match breakdown and download your tailored resume below.
             </p>
           </div>
@@ -349,9 +357,9 @@ export default function DashboardPage() {
           <div className="mt-8">
             <button
               onClick={handleResetForm}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-ink-navy text-parchment font-bold text-sm hover:bg-ink-navy/90 transition-all shadow-md"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-heading text-card font-bold text-sm hover:bg-heading/90 transition-all shadow-md"
             >
-              <Plus className="w-4 h-4 text-amber" />
+              <Plus className="w-4 h-4 text-primary" />
               Tailor for Another Job
             </button>
           </div>
@@ -361,19 +369,19 @@ export default function DashboardPage() {
       {/* ── FAILED STATE ── */}
       {pageState === "failed" && (
         <div className="w-full bg-white/80 backdrop-blur-xl border border-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 md:p-12 flex flex-col items-center text-center">
-          <div className="w-14 h-14 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center mx-auto mb-4 text-red-500">
+          <div className="w-14 h-14 rounded-2xl bg-error/10 border border-error/20 flex items-center justify-center mx-auto mb-4 text-error">
             <AlertTriangle className="w-7 h-7" />
           </div>
-          <h2 className="font-fraunces text-3xl font-bold text-ink-navy mb-2">
+          <h2 className="font-fraunces text-3xl font-bold text-heading mb-2">
             Tailoring Failed
           </h2>
-          <p className="text-ink-navy/60 text-sm max-w-md mx-auto mb-8">
+          <p className="text-body text-sm max-w-md mx-auto mb-8">
             Something went wrong while optimizing your resume. Please try submitting again.
           </p>
 
           <button
             onClick={handleResetForm}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-ink-navy text-parchment font-bold text-sm hover:bg-ink-navy/90 transition-all shadow-md"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-heading text-card font-bold text-sm hover:bg-heading/90 transition-all shadow-md"
           >
             <RotateCcw className="w-4 h-4" />
             Try Again

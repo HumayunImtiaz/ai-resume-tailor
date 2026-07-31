@@ -9,15 +9,18 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: {
-          navy: "#14213D"
+        primary: {
+          DEFAULT: "#2563EB",
+          hover: "#1D4ED8",
         },
-        amber: {
-          DEFAULT: "#E8A33D"
-        },
-        parchment: {
-          DEFAULT: "#FAF6ED"
-        }
+        background: "#F8FAFC",
+        card: "#FFFFFF",
+        border: "#E2E8F0",
+        heading: "#0F172A",
+        body: "#475569",
+        success: "#22C55E",
+        warning: "#F59E0B",
+        error: "#EF4444",
       },
       fontFamily: {
         sans: ["var(--font-inter)", "sans-serif"],

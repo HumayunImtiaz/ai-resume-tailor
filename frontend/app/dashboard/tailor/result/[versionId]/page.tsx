@@ -71,9 +71,9 @@ export default function TailoredVersionDetailPage() {
   if (fetchState === "loading") {
     return (
       <div className="flex-1 flex flex-col items-center justify-center py-16">
-        <div className="w-10 h-10 border-4 border-amber border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="font-fraunces text-lg font-semibold text-ink-navy">Loading tailored version...</p>
-        <p className="text-ink-navy/40 text-xs mt-1">Fetching saved resume data.</p>
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="font-fraunces text-lg font-semibold text-heading">Loading tailored version...</p>
+        <p className="text-body text-xs mt-1">Fetching saved resume data.</p>
       </div>
     );
   }
@@ -82,13 +82,13 @@ export default function TailoredVersionDetailPage() {
     return (
       <div className="flex-1 flex flex-col items-center justify-center py-12">
         <div className="bg-white/80 backdrop-blur-xl border border-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 md:p-12 max-w-md w-full text-center">
-          <div className="w-14 h-14 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center mx-auto mb-4 text-red-500">
+          <div className="w-14 h-14 rounded-2xl bg-error/10 border border-error/20 flex items-center justify-center mx-auto mb-4 text-error">
             <AlertTriangle className="w-7 h-7" />
           </div>
-          <h1 className="font-fraunces text-2xl font-bold text-ink-navy mb-2">
+          <h1 className="font-fraunces text-2xl font-bold text-heading mb-2">
             Version Not Found
           </h1>
-          <p className="text-ink-navy/60 text-sm mb-6">
+          <p className="text-body text-sm mb-6">
             {errorMessage || "This tailored version could not be found."}
           </p>
         </div>
@@ -103,19 +103,19 @@ export default function TailoredVersionDetailPage() {
     <div className="flex-1 flex flex-col items-center w-full max-w-[900px] mx-auto py-2">
       {/* ── Header ── */}
       <div className="flex flex-col items-center text-center mb-8">
-        <div className="w-14 h-14 rounded-2xl bg-emerald-100 border border-emerald-200 flex items-center justify-center mx-auto mb-4 text-emerald-600 shadow-sm">
+        <div className="w-14 h-14 rounded-2xl bg-success/10 border border-success-200 flex items-center justify-center mx-auto mb-4 text-success shadow-sm">
           <CheckCircle2 className="w-7 h-7" />
         </div>
-        <h1 className="font-fraunces text-3xl font-bold text-ink-navy mb-1 leading-tight">
+        <h1 className="font-fraunces text-3xl font-bold text-heading mb-1 leading-tight">
           {jobTitle}
         </h1>
         {jobCompany && (
-          <p className="text-ink-navy/50 font-medium text-lg mb-1">
+          <p className="text-body font-medium text-lg mb-1">
             {jobCompany}
           </p>
         )}
         {version?.createdAt && (
-          <p className="text-ink-navy/40 text-xs">
+          <p className="text-body text-xs">
             Tailored on{" "}
             {new Date(version.createdAt).toLocaleDateString("en-US", {
               year: "numeric",

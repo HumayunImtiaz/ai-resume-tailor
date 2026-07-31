@@ -118,7 +118,7 @@ export default function CoverLetterUploader({ onUploadSuccess }: CoverLetterUplo
                  <div className="absolute inset-x-1 inset-y-1 rounded-full border border-blue-500/30 bg-blue-500/10 animate-pulse" />
                  <div className="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-[spin_1s_ease-in-out_infinite]" />
              </div>
-             <p className="font-semibold text-lg text-ink-navy tracking-tight">Processing Cover Letter</p>
+             <p className="font-semibold text-lg text-heading tracking-tight">Processing Cover Letter</p>
              <p className="text-sm text-gray-500 mt-1">Applying AI extraction...</p>
           </div>
         ) : (
@@ -126,7 +126,7 @@ export default function CoverLetterUploader({ onUploadSuccess }: CoverLetterUplo
             <div className={`p-4 rounded-[20px] mb-6 transition-colors shadow-xl ${isDragging ? "bg-blue-500 text-white shadow-blue-500/30" : "bg-white text-gray-400 border border-gray-100 shadow-black/5"}`}>
                <UploadCloud className="w-8 h-8" />
             </div>
-            <p className="font-semibold text-lg text-ink-navy mb-2">
+            <p className="font-semibold text-lg text-heading mb-2">
               Upload Cover Letter <span className="font-normal text-gray-400">or drop here</span>
             </p>
             <p className="text-sm text-gray-500 max-w-xs px-4 bg-gray-50 py-1.5 rounded-full border border-gray-100">
@@ -149,8 +149,8 @@ export default function CoverLetterUploader({ onUploadSuccess }: CoverLetterUplo
         absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 px-5 py-3 rounded-full text-sm font-semibold shadow-xl transition-all duration-500 z-50 backdrop-blur-xl border
         ${feedback ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8 pointer-events-none"}
         ${feedback?.type === "success" 
-            ? "bg-white/90 border-emerald-200 text-emerald-600 shadow-[0_10px_40px_rgba(16,185,129,0.15)]" 
-            : "bg-white/90 border-red-200 text-red-600 shadow-[0_10px_40px_rgba(239,68,68,0.15)]"}
+            ? "bg-white/90 border-success-200 text-success shadow-[0_10px_40px_rgba(16,185,129,0.15)]" 
+            : "bg-white/90 border-error-200 text-error shadow-[0_10px_40px_rgba(239,68,68,0.15)]"}
       `}>
         {feedback?.type === "success" ? <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" /> : <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />}
         <span>{feedback?.message}</span>
