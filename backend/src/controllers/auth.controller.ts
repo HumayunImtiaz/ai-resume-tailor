@@ -24,6 +24,12 @@ export const authController = {
       return;
     }
 
+    res.cookie('token', result.data.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
     sendResponse(res, 201, 'success', result.data, 'Account created successfully');
   }) as RequestHandler,
 
@@ -47,6 +53,12 @@ export const authController = {
       return;
     }
 
+    res.cookie('token', result.data.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
     sendResponse(res, 200, 'success', result.data, 'Login successful');
   }) as RequestHandler,
 
@@ -65,5 +77,10 @@ export const authController = {
     }
 
     sendResponse(res, 200, 'success', result.data, 'Profile retrieved successfully');
+  }) as RequestHandler,
+
+  logout: ((req: Request, res: Response) => {
+    res.clearCookie('token');
+    sendResponse(res, 200, 'success', null, 'Logged out successfully');
   }) as RequestHandler
 };

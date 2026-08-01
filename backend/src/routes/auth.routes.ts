@@ -88,4 +88,17 @@ router.post('/login', authLimiter, authController.login);
  */
 router.get('/me', requireAuth, authController.getProfile);
 
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: Logout a user
+ *     description: "Clears the HttpOnly token cookie"
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ */
+router.post('/logout', authController.logout);
+
 export default router;

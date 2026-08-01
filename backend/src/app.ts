@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import env from './config/env';
 import swaggerUi from 'swagger-ui-express';
@@ -14,6 +15,7 @@ const app = express();
 app.use(helmet());
 app.use(cors({ origin: env.frontendUrl, credentials: true }));
 app.use(express.json());
+app.use(cookieParser());
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api/auth', authRoutes);

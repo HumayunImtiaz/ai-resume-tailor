@@ -87,17 +87,28 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.replace("/login");
-    } else {
-      setIsCheckingAuth(false);
-      fetchDashboardData();
-    }
+    const checkAuth = async () => {
+      try {
+        const res = await apiFetch("/api/auth/me");
+        if (res.ok) {
+          setIsCheckingAuth(false);
+          fetchDashboardData();
+        } else {
+          router.replace("/login");
+        }
+      } catch (err) {
+        router.replace("/login");
+      }
+    };
+    checkAuth();
   }, [router, fetchDashboardData]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
+  const handleLogout = async () => {
+    try {
+      await apiFetch("/api/auth/logout", { method: "POST" });
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
     router.replace("/login");
   };
 

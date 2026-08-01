@@ -10,14 +10,19 @@ declare module 'express-serve-static-core' {
 }
 
 export const requireAuth = (req: Request, res: Response, next: NextFunction): void => {
-  const authHeader = req.headers.authorization;
+  let token = req.cookies?.token;
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!token) {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    }
+  }
+
+  if (!token) {
     sendResponse(res, 401, 'error', null, 'Unauthorized - No token provided');
     return;
   }
-
-  const token = authHeader.split(' ')[1];
 
   try {
     const payload = jwt.verify(token, env.jwtSecret) as { userId: string };
