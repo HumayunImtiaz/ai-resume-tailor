@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middlewares/auth.middleware';
 import { jobController } from '../controllers/job.controller';
+import { aiLimiter } from '../middlewares/rateLimiter.middleware';
 
 const router = Router();
 
@@ -16,6 +17,7 @@ const router = Router();
  * /api/jobs:
  *   post:
  *     summary: Create a job description and enqueue a tailoring job
+ *     description: "Rate limited: max 20 requests per hour"
  *     tags: [Jobs]
  *     security:
  *       - bearerAuth: []
@@ -51,7 +53,7 @@ const router = Router();
  *       500:
  *         description: Server error
  */
-router.post('/', requireAuth, jobController.createJob);
+router.post('/', requireAuth, aiLimiter, jobController.createJob);
 
 /**
  * @swagger

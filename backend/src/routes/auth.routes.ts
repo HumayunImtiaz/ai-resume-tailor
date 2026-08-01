@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authController } from '../controllers/auth.controller';
 import { requireAuth } from '../middlewares/auth.middleware';
+import { authLimiter } from '../middlewares/rateLimiter.middleware';
 
 const router = Router();
 
@@ -9,6 +10,7 @@ const router = Router();
  * /api/auth/signup:
  *   post:
  *     summary: Register a new user
+ *     description: "Rate limited: max 10 requests per 15 minutes"
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -35,13 +37,14 @@ const router = Router();
  *       409:
  *         description: Email already registered
  */
-router.post('/signup', authController.signup);
+router.post('/signup', authLimiter, authController.signup);
 
 /**
  * @swagger
  * /api/auth/login:
  *   post:
  *     summary: Login a user
+ *     description: "Rate limited: max 10 requests per 15 minutes"
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -65,7 +68,7 @@ router.post('/signup', authController.signup);
  *       401:
  *         description: Unauthorized
  */
-router.post('/login', authController.login);
+router.post('/login', authLimiter, authController.login);
 
 /**
  * @swagger
