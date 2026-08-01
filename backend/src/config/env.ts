@@ -21,6 +21,7 @@ export const env = {
     port: parseInt(process.env.REDIS_PORT || '6379', 10),
   },
   groqApiKey: getRequiredEnv('GROQ_API_KEY'),
+  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
 };
 
 export default env;
