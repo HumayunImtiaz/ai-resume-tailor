@@ -1,5 +1,6 @@
 import prisma from '../config/database';
 import { resumeService } from './resume.service';
+import cloudinary from '../config/cloudinary';
 
 export const coverLetterService = {
   uploadCoverLetter: async (userId: string, file: Express.Multer.File) => {
@@ -10,15 +11,34 @@ export const coverLetterService = {
         return extractionResult; // Returns { success: false, error: ... }
       }
 
+      let fileUrl = null;
+      try {
+        const uploadResult = await new Promise((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            { resource_type: 'raw', folder: 'cover_letters' },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
+          uploadStream.end(file.buffer);
+        });
+        fileUrl = (uploadResult as any).secure_url;
+      } catch (uploadError) {
+        console.error('Cloudinary cover letter upload error:', uploadError);
+      }
+
       const coverLetter = await prisma.coverLetter.create({
         data: {
           userId,
           originalFilename: file.originalname,
+          fileUrl,
           rawText: extractionResult.text,
         },
         select: {
           id: true,
           originalFilename: true,
+          fileUrl: true,
           uploadedAt: true
         }
       });
@@ -40,6 +60,7 @@ export const coverLetterService = {
         select: {
           id: true,
           originalFilename: true,
+          fileUrl: true,
           uploadedAt: true
         },
         orderBy: { uploadedAt: 'desc' }

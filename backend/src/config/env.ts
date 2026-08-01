@@ -22,6 +22,9 @@ export const env = {
   },
   groqApiKey: getRequiredEnv('GROQ_API_KEY'),
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+  cloudinaryCloudName: getRequiredEnv('CLOUDINARY_CLOUD_NAME'),
+  cloudinaryApiKey: getRequiredEnv('CLOUDINARY_API_KEY'),
+  cloudinaryApiSecret: getRequiredEnv('CLOUDINARY_API_SECRET'),
 };
 
 export default env;

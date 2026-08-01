@@ -1,6 +1,7 @@
 import { PDFParse } from 'pdf-parse';
 import mammoth from 'mammoth';
 import prisma from '../config/database';
+import cloudinary from '../config/cloudinary';
 
 interface ResumeLink {
   text: string;
@@ -24,19 +25,28 @@ const extractLinksFromHtml = (html: string): ResumeLink[] => {
 export const resumeService = {
   extractText: async (mimetype: string, buffer: Buffer) => {
     try {
+      let rawText = '';
+      let links: ResumeLink[] = [];
+
       if (mimetype === 'application/pdf') {
         const parser = new PDFParse({ data: buffer });
         const result = await parser.getText();
-        return { success: true as const, text: result.text, links: [] as ResumeLink[] };
+        rawText = result.text;
       } else if (mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
         // Extract plain text for AI analysis
         const textData = await mammoth.extractRawText({ buffer });
         // Extract HTML to capture hyperlinks
         const htmlData = await mammoth.convertToHtml({ buffer });
-        const links = extractLinksFromHtml(htmlData.value);
-        return { success: true as const, text: textData.value, links };
+        links = extractLinksFromHtml(htmlData.value);
+        rawText = textData.value;
+      } else {
+        return { success: false as const, error: 'Only PDF and DOCX files are supported' };
       }
-      return { success: false as const, error: 'Only PDF and DOCX files are supported' };
+
+      // Sanitize extracted text by stripping null bytes
+      rawText = rawText.replace(/\u0000/g, '');
+
+      return { success: true as const, text: rawText, links };
     } catch (error) {
       console.error('Extract text error:', error);
       return { success: false as const, error: 'Could not parse the uploaded file' };
@@ -51,16 +61,35 @@ export const resumeService = {
         return extractionResult; // Returns { success: false, error: ... }
       }
 
+      let fileUrl = null;
+      try {
+        const uploadResult = await new Promise((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            { resource_type: 'raw', folder: 'resumes' },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
+          uploadStream.end(file.buffer);
+        });
+        fileUrl = (uploadResult as any).secure_url;
+      } catch (uploadError) {
+        console.error('Cloudinary resume upload error:', uploadError);
+      }
+
       const resume = await prisma.resume.create({
         data: {
           userId,
           originalFilename: file.originalname,
+          fileUrl,
           rawText: extractionResult.text,
           links: extractionResult.links as any,
         },
         select: {
           id: true,
           originalFilename: true,
+          fileUrl: true,
           uploadedAt: true
         }
       });
@@ -82,6 +111,7 @@ export const resumeService = {
         select: {
           id: true,
           originalFilename: true,
+          fileUrl: true,
           uploadedAt: true
         },
         orderBy: { uploadedAt: 'desc' }
