@@ -46,6 +46,7 @@ export default function TailoredResult({
 }: TailoredResultProps) {
   const [isCopied, setIsCopied] = useState(false);
   const [isDownloadingDocx, setIsDownloadingDocx] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [downloadError, setDownloadError] = useState("");
 
   // Build a plain-text representation from the structuerror resume
@@ -104,6 +105,38 @@ export default function TailoredResult({
       setDownloadError(err.message || "Failed to download");
     } finally {
       setIsDownloadingDocx(false);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!jobDescriptionId) return;
+    setIsDownloadingPdf(true);
+    setDownloadError("");
+
+    try {
+      const response = await apiFetch(`/api/jobs/${jobDescriptionId}/download-pdf`);
+      if (!response.ok) {
+        let errorMsg = "Failed to download";
+        try {
+          const errData = await response.json();
+          if (errData.message) errorMsg = errData.message;
+        } catch (_) {}
+        throw new Error(errorMsg);
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "Tailored_Resume.pdf";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      setDownloadError(err.message || "Failed to download");
+    } finally {
+      setIsDownloadingPdf(false);
     }
   };
 
@@ -306,19 +339,34 @@ export default function TailoredResult({
                 .txt
               </button>
               {jobDescriptionId && (
-                <button
-                  onClick={handleDownloadDocx}
-                  disabled={isDownloadingDocx}
-                  className="px-4 py-2 rounded-xl bg-primary text-card hover:bg-primary-hover transition-colors font-bold text-base flex items-center justify-center gap-2"
-                  title="Download as formatted .docx"
-                >
-                  {isDownloadingDocx ? (
-                    <div className="w-3.5 h-3.5 border-2 border-heading border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <Download className="w-3.5 h-3.5" />
-                  )}
-                  Export DOCX
-                </button>
+                <>
+                  <button
+                    onClick={handleDownloadPdf}
+                    disabled={isDownloadingPdf}
+                    className="px-4 py-2 rounded-xl border border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 transition-colors font-bold text-base flex items-center justify-center gap-2"
+                    title="Download as formatted .pdf"
+                  >
+                    {isDownloadingPdf ? (
+                      <div className="w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Download className="w-3.5 h-3.5" />
+                    )}
+                    Export PDF
+                  </button>
+                  <button
+                    onClick={handleDownloadDocx}
+                    disabled={isDownloadingDocx}
+                    className="px-4 py-2 rounded-xl bg-primary text-card hover:bg-primary-hover transition-colors font-bold text-base flex items-center justify-center gap-2"
+                    title="Download as formatted .docx"
+                  >
+                    {isDownloadingDocx ? (
+                      <div className="w-3.5 h-3.5 border-2 border-heading border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Download className="w-3.5 h-3.5" />
+                    )}
+                    Export DOCX
+                  </button>
+                </>
               )}
               {downloadError && (
                 <span className="absolute -bottom-8 right-0 text-error text-[10px] whitespace-nowrap bg-white px-2 py-1 rounded shadow-sm border border-error/20 z-10">
@@ -411,18 +459,27 @@ function renderStructuerrorResume(r: any): React.ReactNode {
   }
 
   // Skills
-  if (r.skills && Array.isArray(r.skills) && r.skills.length > 0) {
+  if (r.skillCategories && Array.isArray(r.skillCategories) && r.skillCategories.length > 0) {
     sections.push(
       <div key="skills">
         <SectionHeading>Skills & Core Competencies</SectionHeading>
-        <div className="flex flex-wrap gap-2">
-          {r.skills.map((s: string, i: number) => (
-            <span
-              key={i}
-              className="px-2.5 py-1 text-xs font-semibold bg-heading/5 text-body rounded-md border border-heading/10"
-            >
-              {s}
-            </span>
+        <div className="space-y-4">
+          {r.skillCategories.map((cat: any, i: number) => (
+            <div key={i}>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-body/70 mb-1.5">
+                {cat.category}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {cat.skills?.map((s: string, idx: number) => (
+                  <span
+                    key={idx}
+                    className="px-2.5 py-1 text-xs font-semibold bg-heading/5 text-body rounded-md border border-heading/10"
+                  >
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </div>
@@ -580,8 +637,14 @@ function buildPlainText(r: any): string {
     lines.push("PROFESSIONAL SUMMARY", r.summary, "");
   }
 
-  if (r.skills?.length) {
-    lines.push("SKILLS & CORE COMPETENCIES", r.skills.join(", "), "");
+  if (r.skillCategories?.length) {
+    lines.push("SKILLS & CORE COMPETENCIES");
+    for (const cat of r.skillCategories) {
+      if (cat.category && cat.skills) {
+        lines.push(`${cat.category}: ${cat.skills.join(', ')}`);
+      }
+    }
+    lines.push("");
   }
 
   if (r.experience?.length) {

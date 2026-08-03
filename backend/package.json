@@ -30,6 +30,7 @@
     "jsonwebtoken": "*",
     "mammoth": "*",
     "multer": "*",
+    "pdf-lib": "^1.17.1",
     "pdf-parse": "*",
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1",

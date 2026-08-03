@@ -11,7 +11,10 @@ export interface StructuredResume {
     links?: { label: string; url: string }[];
   } | string; // accept both old string and new object shape gracefully
   summary: string;
-  skills: string[];
+  skillCategories?: {
+    category: string;
+    skills: string[];
+  }[];
   experience: {
     role: string;
     company: string;
@@ -200,21 +203,32 @@ export async function generateResumeDocx(resume: StructuredResume): Promise<Docx
       );
     }
 
-    // TECHNICAL SKILLS
-    if (resume.skills && resume.skills.length > 0) {
-      addSectionHeading("TECHNICAL SKILLS");
-      children.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: resume.skills.join(", "),
-              font: "Calibri",
-              size: 19, // 9.5pt
-            }),
-          ],
-          spacing: { after: 60 },
-        })
-      );
+    // SKILLS & CORE COMPETENCIES
+    if (resume.skillCategories && resume.skillCategories.length > 0) {
+      addSectionHeading("SKILLS & CORE COMPETENCIES");
+      
+      for (let i = 0; i < resume.skillCategories.length; i++) {
+        const cat = resume.skillCategories[i];
+        const isLast = i === resume.skillCategories.length - 1;
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: `${cat.category}: `,
+                font: "Calibri",
+                size: 19,
+                bold: true,
+              }),
+              new TextRun({
+                text: cat.skills.join(", "),
+                font: "Calibri",
+                size: 19,
+              }),
+            ],
+            spacing: { after: isLast ? 60 : 40 },
+          })
+        );
+      }
     }
 
     // PROFESSIONAL EXPERIENCE

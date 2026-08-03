@@ -36,6 +36,7 @@ Rules for rewriting:
 4. Never fabricate a URL. Only use URLs exactly as provided in the links context. Do not invent or guess URLs.
 5. Fix any grammar or spelling issues while preserving the original meaning exactly — fix HOW something is said, never WHAT is claimed.
 6. The cover letter is for supporting context only—never copy paragraphs directly into the resume.
+7. Do not over-trim the resume. Only remove skills, bullets, or experience details that are genuinely unrelated to the job's general field (e.g. remove a completely unrelated skill like 'video editing' for a software engineering role). Do NOT remove skills or experience that are adjacent to or within the same domain as the job, even if not an exact keyword match — for example, if the job description focuses on frontend work but the candidate has full-stack experience (backend, databases, DevOps), KEEP that experience and those skills, since it demonstrates broader capability within the same field and recruiters value seeing that range. Prioritize and reorder content so the most job-relevant items appear first within each section, but preserve the candidate's actual breadth of experience rather than reducing it to only exact keyword matches.
 
 You MUST respond with exactly a valid JSON object and nothing else. Avoid using markdown formatting (like \`\`\`json) or adding any conversational text.
 The JSON object must match this structure exactly:
@@ -63,7 +64,12 @@ The JSON object must match this structure exactly:
       "links": [{ "label": "<string, e.g. 'GitHub', 'LinkedIn', 'Portfolio'>", "url": "<exact URL from the provided links array — never fabricate>" }]
     },
     "summary": "<string, 2-4 sentences, rewritten to emphasize fit for this specific job>",
-    "skills": [<array of strings, skills grouped or listed, prioritized by relevance to the job description>],
+    "skillCategories": [
+      {
+        "category": "<string, e.g. Frontend, Backend (infer from original resume if categorized, else group logically)>",
+        "skills": [<array of strings, prioritized by relevance to the job description>]
+      }
+    ],
     "experience": [
       {
         "role": "<string>",
@@ -134,7 +140,9 @@ Parse the given resume text into the requested structure, using the job descript
       typeof tr.summary !== 'string' ||
       tr.summary.trim() === '' ||
       !Array.isArray(tr.experience) ||
-      !Array.isArray(tr.skills) ||
+      !Array.isArray(tr.skillCategories) ||
+      tr.skillCategories.length === 0 ||
+      !tr.skillCategories.every((c: any) => typeof c.category === 'string' && Array.isArray(c.skills)) ||
       !Array.isArray(tr.education) ||
       !Array.isArray(tr.projects) ||
       !Array.isArray(tr.certifications) ||

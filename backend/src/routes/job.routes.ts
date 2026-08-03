@@ -195,6 +195,36 @@ router.get('/:jobDescriptionId/download', requireAuth, jobController.downloadTai
 
 /**
  * @swagger
+ * /api/jobs/{jobDescriptionId}/download-pdf:
+ *   get:
+ *     summary: Download the tailored resume as a PDF file
+ *     tags: [Jobs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: jobDescriptionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the job description
+ *     responses:
+ *       200:
+ *         description: The tailored resume PDF file
+ *         content:
+ *           application/pdf:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       404:
+ *         description: Job not found or tailored resume not ready yet
+ *       500:
+ *         description: Server error or document generation failed
+ */
+router.get('/:jobDescriptionId/download-pdf', requireAuth, jobController.downloadTailoredPdf);
+
+/**
+ * @swagger
  * /api/jobs/versions/{id}:
  *   get:
  *     summary: Get full details of a specific tailored version
