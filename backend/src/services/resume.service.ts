@@ -2,6 +2,7 @@ import { PDFParse } from 'pdf-parse';
 import mammoth from 'mammoth';
 import prisma from '../config/database';
 import cloudinary from '../config/cloudinary';
+import logger from '../config/logger';
 
 interface ResumeLink {
   text: string;
@@ -48,7 +49,7 @@ export const resumeService = {
 
       return { success: true as const, text: rawText, links };
     } catch (error) {
-      console.error('Extract text error:', error);
+      logger.error('Extract text error', { error });
       return { success: false as const, error: 'Could not parse the uploaded file' };
     }
   },
@@ -75,7 +76,7 @@ export const resumeService = {
         });
         fileUrl = (uploadResult as any).secure_url;
       } catch (uploadError) {
-        console.error('Cloudinary resume upload error:', uploadError);
+        logger.error('Cloudinary resume upload error', { error: uploadError });
       }
 
       const resume = await prisma.resume.create({
@@ -99,7 +100,7 @@ export const resumeService = {
         data: resume
       };
     } catch (error) {
-      console.error('Upload resume error:', error);
+      logger.error('Upload resume error', { error });
       return { success: false as const, error: 'Something went wrong, please try again' };
     }
   },
@@ -119,7 +120,7 @@ export const resumeService = {
 
       return { success: true as const, data: resumes };
     } catch (error) {
-      console.error('List resumes error:', error);
+      logger.error('List resumes error', { error });
       return { success: false as const, error: 'Something went wrong, please try again' };
     }
   },
@@ -136,7 +137,7 @@ export const resumeService = {
 
       return { success: true as const, data: null };
     } catch (error) {
-      console.error('Delete resume error:', error);
+      logger.error('Delete resume error', { error });
       return { success: false as const, error: 'Something went wrong, please try again' };
     }
   },
@@ -170,7 +171,7 @@ export const resumeService = {
 
       return { success: true as const, data: versions };
     } catch (error) {
-      console.error('List tailored versions error:', error);
+      logger.error('List tailored versions error', { error });
       return { success: false as const, error: 'Something went wrong, please try again' };
     }
   }

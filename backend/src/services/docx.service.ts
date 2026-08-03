@@ -1,4 +1,5 @@
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, BorderStyle, AlignmentType, TabStopType, ExternalHyperlink, UnderlineType } from 'docx';
+import logger from '../config/logger';
 
 export interface StructuredResume {
   fullName: string;
@@ -412,7 +413,7 @@ export async function generateResumeDocx(resume: StructuredResume): Promise<Docx
     const buffer = await Packer.toBuffer(doc);
     return { success: true, data: buffer };
   } catch (error: any) {
-    console.error('Error generating DOCX:', error);
+    logger.error('Error generating DOCX:', { error });
     return { success: false, error: 'Could not generate document' };
   }
 }

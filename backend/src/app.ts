@@ -3,6 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import env from './config/env';
+import logger from './config/logger';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
 import authRoutes from './routes/auth.routes';
@@ -16,6 +17,16 @@ app.use(helmet());
 app.use(cors({ origin: env.frontendUrl, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
+
+// Request logger
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    logger.info(`${req.method} ${req.path} ${res.statusCode} ${duration}ms`);
+  });
+  next();
+});
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api/auth', authRoutes);

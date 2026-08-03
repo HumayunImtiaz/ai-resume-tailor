@@ -2,6 +2,7 @@ import prisma from '../config/database';
 import { addTailorJob } from '../queues/tailor.queue';
 import { tailorQueue } from '../queues/tailor.queue';
 import { generateResumeDocx } from './docx.service';
+import logger from '../config/logger';
 
 interface CreateJobInput {
   resumeId: string;
@@ -53,7 +54,7 @@ export const jobService = {
         },
       };
     } catch (error) {
-      console.error('Create job description error:', error);
+      logger.error('Create job description error', { error });
       return { success: false as const, error: 'Something went wrong, please try again' };
     }
   },
@@ -108,7 +109,7 @@ export const jobService = {
         data: { state },
       };
     } catch (error) {
-      console.error('Get job status error:', error);
+      logger.error('Get job status error', { error });
       return { success: false as const, error: 'Something went wrong, please try again' };
     }
   },
@@ -149,7 +150,7 @@ export const jobService = {
 
       return { success: true as const, data: result.data };
     } catch (error) {
-      console.error('Get tailored docx error:', error);
+      logger.error('Get tailored docx error', { error });
       return { success: false as const, error: 'Something went wrong, please try again' };
     }
   },
@@ -195,7 +196,7 @@ export const jobService = {
         },
       };
     } catch (error) {
-      console.error('Get tailored version detail error:', error);
+      logger.error('Get tailored version detail error', { error });
       return { success: false as const, error: 'Something went wrong, please try again' };
     }
   },

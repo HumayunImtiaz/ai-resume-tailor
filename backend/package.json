@@ -33,6 +33,7 @@
     "pdf-parse": "*",
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1",
+    "winston": "^3.19.0",
     "zod": "*"
   },
   "devDependencies": {

@@ -1,5 +1,6 @@
 import Groq from 'groq-sdk';
 import { env } from '../config/env';
+import logger from '../config/logger';
 
 export const analyzeMatch = async (
   resumeText: string,
@@ -13,7 +14,7 @@ export const analyzeMatch = async (
     const MAX_LENGTH = 15000;
     const truncate = (text: string, label: string) => {
       if (text.length > MAX_LENGTH) {
-        console.warn(`[Security] ${label} exceeded ${MAX_LENGTH} characters and was truncated.`);
+        logger.warn(`[Security] ${label} exceeded ${MAX_LENGTH} characters and was truncated`);
         return text.substring(0, MAX_LENGTH);
       }
       return text;
@@ -155,7 +156,7 @@ Parse the given resume text into the requested structure, using the job descript
       },
     };
   } catch (error) {
-    console.error('AI analysis failed:', error);
+    logger.error('AI analysis failed', { error });
     return {
       success: false,
       error: 'AI analysis failed',

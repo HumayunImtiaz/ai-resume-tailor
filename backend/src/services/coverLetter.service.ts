@@ -1,6 +1,7 @@
 import prisma from '../config/database';
 import { resumeService } from './resume.service';
 import cloudinary from '../config/cloudinary';
+import logger from '../config/logger';
 
 export const coverLetterService = {
   uploadCoverLetter: async (userId: string, file: Express.Multer.File) => {
@@ -25,7 +26,7 @@ export const coverLetterService = {
         });
         fileUrl = (uploadResult as any).secure_url;
       } catch (uploadError) {
-        console.error('Cloudinary cover letter upload error:', uploadError);
+        logger.error('Cloudinary cover letter upload error', { error: uploadError });
       }
 
       const coverLetter = await prisma.coverLetter.create({
@@ -48,7 +49,7 @@ export const coverLetterService = {
         data: coverLetter
       };
     } catch (error) {
-      console.error('Upload cover letter error:', error);
+      logger.error('Upload cover letter error', { error });
       return { success: false as const, error: 'Something went wrong, please try again' };
     }
   },
@@ -68,7 +69,7 @@ export const coverLetterService = {
 
       return { success: true as const, data: coverLetters };
     } catch (error) {
-      console.error('List cover letters error:', error);
+      logger.error('List cover letters error', { error });
       return { success: false as const, error: 'Something went wrong, please try again' };
     }
   },
@@ -85,7 +86,7 @@ export const coverLetterService = {
 
       return { success: true as const, data: null };
     } catch (error) {
-      console.error('Delete cover letter error:', error);
+      logger.error('Delete cover letter error', { error });
       return { success: false as const, error: 'Something went wrong, please try again' };
     }
   }

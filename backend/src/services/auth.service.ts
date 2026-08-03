@@ -4,6 +4,7 @@ import prisma from '../config/database';
 import env from '../config/env';
 import { z } from 'zod';
 import { signupSchema, loginSchema } from '../validators/auth.validator';
+import logger from '../config/logger';
 
 type SignupInput = z.infer<typeof signupSchema>;
 type LoginInput = z.infer<typeof loginSchema>;
@@ -49,7 +50,7 @@ export const authService = {
         }
       };
     } catch (error) {
-      console.error('Signup error:', error);
+      logger.error('Signup error', { error });
       return { success: false as const, error: "Something went wrong, please try again" };
     }
   },
@@ -87,7 +88,7 @@ export const authService = {
         }
       };
     } catch (error) {
-      console.error('Login error:', error);
+      logger.error('Login error', { error });
       return { success: false as const, error: "Something went wrong, please try again" };
     }
   },
@@ -109,7 +110,7 @@ export const authService = {
 
       return { success: true as const, data: user };
     } catch (error) {
-      console.error('Profile error:', error);
+      logger.error('Profile error', { error });
       return { success: false as const, error: "Something went wrong, please try again" };
     }
   }

@@ -3,13 +3,14 @@ import { redisConnection } from '../config/redis';
 import prisma from '../config/database';
 import { TailorJobPayload } from '../queues/tailor.queue';
 import { analyzeMatch } from '../services/ai.service';
+import logger from '../config/logger';
 
 // Initialize the worker setup function
 export const initializeTailorWorker = () => {
   const worker = new Worker<TailorJobPayload>(
     'tailor-resume',
     async (job: Job<TailorJobPayload>) => {
-      console.log(`[Worker] Started processing tailor job: ${job.id}`);
+      logger.info(`Worker started processing tailor job: ${job.id}`);
 
       const { resumeId, jobDescriptionId } = job.data;
 
@@ -50,9 +51,7 @@ export const initializeTailorWorker = () => {
 
       if (!aiResult.success || !aiResult.data) {
         // Graceful fallback — log clearly and continue with neutral values
-        console.error(
-          `[Worker] Job ${job.id}: AI analysis failed — falling back to placeholder values.`
-        );
+        logger.error(`Worker job ${job.id}: AI analysis failed — falling back to placeholder values`);
         matchScore = 0;
         matchedSkills = [];
         missingSkills = [];
@@ -60,9 +59,10 @@ export const initializeTailorWorker = () => {
         tailoredText = JSON.stringify({});
       } else {
         const tr = aiResult.data.tailoredResume as any;
-        console.log(
-          `[Worker] Job ${job.id}: AI analysis succeeded — matchScore: ${aiResult.data.matchScore}, missingSkills: ${aiResult.data.missingSkills?.length || 0}.`
-        );
+        logger.info(`Worker job ${job.id}: AI analysis succeeded`, {
+          matchScore: aiResult.data.matchScore,
+          missingSkills: aiResult.data.missingSkills?.length || 0,
+        });
         matchScore = aiResult.data.matchScore;
         matchedSkills = aiResult.data.matchedSkills;
         missingSkills = aiResult.data.missingSkills;
@@ -83,7 +83,7 @@ export const initializeTailorWorker = () => {
         },
       });
 
-      console.log(`[Worker] Successfully completed tailor job: ${job.id}`);
+      logger.info(`Worker successfully completed tailor job: ${job.id}`);
     },
     {
       connection: redisConnection,
@@ -93,16 +93,16 @@ export const initializeTailorWorker = () => {
   // Handle errors
   worker.on('failed', (job: Job<TailorJobPayload> | undefined, err: Error) => {
     if (job) {
-      console.error(`[Worker] Job ${job.id} failed with error:`, err.message);
+      logger.error(`Worker job ${job.id} failed`, { error: err.message });
     } else {
-      console.error(`[Worker] A job failed with error:`, err.message);
+      logger.error('Worker job failed (unknown job)', { error: err.message });
     }
   });
 
   worker.on('error', (err: Error) => {
-    console.error(`[Worker] Worker error:`, err.message);
+    logger.error('Worker error', { error: err.message });
   });
 
-  console.log('Tailor worker listening for jobs...');
+  logger.info('Tailor worker listening for jobs');
   return worker;
 };
