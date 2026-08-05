@@ -186,8 +186,12 @@ export const jobService = {
       }
 
       const result = await generateResumePdf(parsedResume);
-      if (!result.success || !result.data) {
-        return { success: false as const, error: 'Could not generate document' };
+      if (!result.success) {
+        // Propagate the specific error from PDF generation for better debugging
+        return { success: false as const, error: result.error ?? 'Could not generate document' };
+      }
+      if (!result.data) {
+        return { success: false as const, error: 'PDF generation succeeded but no data returned' };
       }
 
       return { success: true as const, data: result.data };
