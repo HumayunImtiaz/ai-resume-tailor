@@ -1,6 +1,22 @@
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import logger from '../config/logger';
 
+
+function sanitizeForPdf(text: string): string {
+  if (!text) return text;
+  return text
+    .replace(/→/g, '-')
+    .replace(/–/g, '-')
+    .replace(/—/g, '-')
+    .replace(/‘/g, "'")
+    .replace(/’/g, "'")
+    .replace(/“/g, '"')
+    .replace(/”/g, '"')
+    .replace(/…/g, '...')
+    // Strip any remaining characters outside the basic WinAnsi-safe range
+    .replace(/[^\x00-\xFF]/g, '');
+}
+
 export interface StructuredResume {
   fullName: string;
   title?: string;
@@ -53,6 +69,15 @@ export async function generateResumePdf(resume: StructuredResume): Promise<PdfGe
     let page = pdfDoc.addPage([612, 792]);
     let currentY = 792 - margin;
 
+    
+    const drawSanitizedText = (p: any, text: string, options: any) => {
+      p.drawText(sanitizeForPdf(text), options);
+    };
+
+    const getSanitizedWidth = (font: any, text: string, size: number) => {
+      return font.widthOfTextAtSize(sanitizeForPdf(text), size);
+    };
+
     const rgbColor = (r: number, g: number, b: number) => rgb(r / 255, g / 255, b / 255);
     const darkGray = rgbColor(85, 85, 85);
     const black = rgbColor(0, 0, 0);
@@ -72,7 +97,7 @@ export async function generateResumePdf(resume: StructuredResume): Promise<PdfGe
 
       for (let i = 0; i < words.length; i++) {
         const testLine = line + words[i] + ' ';
-        const testWidth = font.widthOfTextAtSize(testLine, size);
+        const testWidth = getSanitizedWidth(font, testLine, size);
         if (testWidth > (availableWidth - (x - margin)) && i > 0) {
           lines.push(line);
           line = words[i] + ' ';
@@ -87,7 +112,7 @@ export async function generateResumePdf(resume: StructuredResume): Promise<PdfGe
       checkNewPage(lines.length * lineHeight);
 
       for (const l of lines) {
-        page.drawText(l.trim(), {
+        drawSanitizedText(page, l.trim(), {
           x,
           y: currentY - size,
           size,
@@ -102,9 +127,9 @@ export async function generateResumePdf(resume: StructuredResume): Promise<PdfGe
     // Heading: Full Name
     if (resume.fullName) {
       const nameSize = 22;
-      const textWidth = helveticaBold.widthOfTextAtSize(resume.fullName, nameSize);
+      const textWidth = getSanitizedWidth(helveticaBold, resume.fullName, nameSize);
       checkNewPage(nameSize * 1.2);
-      page.drawText(resume.fullName, {
+      drawSanitizedText(page, resume.fullName, {
         x: (612 - textWidth) / 2,
         y: currentY - nameSize,
         size: nameSize,
@@ -118,9 +143,9 @@ export async function generateResumePdf(resume: StructuredResume): Promise<PdfGe
     if (resume.title) {
       currentY -= 5;
       const titleSize = 11;
-      const textWidth = helveticaFont.widthOfTextAtSize(resume.title, titleSize);
+      const textWidth = getSanitizedWidth(helveticaFont, resume.title, titleSize);
       checkNewPage(titleSize * 1.2);
-      page.drawText(resume.title, {
+      drawSanitizedText(page, resume.title, {
         x: (612 - textWidth) / 2,
         y: currentY - titleSize,
         size: titleSize,
@@ -136,9 +161,9 @@ export async function generateResumePdf(resume: StructuredResume): Promise<PdfGe
       const contactSize = 9;
 
       if (typeof resume.contactLine === 'string') {
-        const textWidth = helveticaFont.widthOfTextAtSize(resume.contactLine, contactSize);
+        const textWidth = getSanitizedWidth(helveticaFont, resume.contactLine, contactSize);
         checkNewPage(contactSize * 1.2);
-        page.drawText(resume.contactLine, {
+        drawSanitizedText(page, resume.contactLine, {
           x: (612 - textWidth) / 2,
           y: currentY - contactSize,
           size: contactSize,
@@ -150,11 +175,11 @@ export async function generateResumePdf(resume: StructuredResume): Promise<PdfGe
         const parts: { text: string; type: string; url?: string; width: number }[] = [];
         let totalWidth = 0;
         const separator = '  |  ';
-        const sepWidth = helveticaFont.widthOfTextAtSize(separator, contactSize);
+        const sepWidth = getSanitizedWidth(helveticaFont, separator, contactSize);
 
         const addPart = (type: string, text: string, url?: string) => {
           if (parts.length > 0) totalWidth += sepWidth;
-          const width = helveticaFont.widthOfTextAtSize(text, contactSize);
+          const width = getSanitizedWidth(helveticaFont, text, contactSize);
           parts.push({ text, type, url, width });
           totalWidth += width;
         };
@@ -174,7 +199,7 @@ export async function generateResumePdf(resume: StructuredResume): Promise<PdfGe
 
         parts.forEach((p, idx) => {
           if (idx > 0) {
-            page.drawText(separator, {
+            drawSanitizedText(page, separator, {
               x: startX,
               y: currentY - contactSize,
               size: contactSize,
@@ -185,7 +210,7 @@ export async function generateResumePdf(resume: StructuredResume): Promise<PdfGe
           }
 
           if (p.type === 'link' && p.url) {
-            page.drawText(p.text, {
+            drawSanitizedText(page, p.text, {
               x: startX,
               y: currentY - contactSize,
               size: contactSize,
@@ -210,7 +235,7 @@ export async function generateResumePdf(resume: StructuredResume): Promise<PdfGe
             }
             annots.push(ref);
           } else {
-            page.drawText(p.text, {
+            drawSanitizedText(page, p.text, {
               x: startX,
               y: currentY - contactSize,
               size: contactSize,
@@ -240,7 +265,7 @@ export async function generateResumePdf(resume: StructuredResume): Promise<PdfGe
       currentY -= 10;
       const size = 11;
       checkNewPage(size * 1.2);
-      page.drawText(title, {
+      drawSanitizedText(page, title, {
         x: margin,
         y: currentY - size,
         size,
@@ -263,11 +288,11 @@ export async function generateResumePdf(resume: StructuredResume): Promise<PdfGe
 
       for (const cat of resume.skillCategories) {
         const categoryTitle = `${cat.category}: `;
-        const titleWidth = helveticaBold.widthOfTextAtSize(categoryTitle, 9.5);
+        const titleWidth = getSanitizedWidth(helveticaBold, categoryTitle, 9.5);
         
         checkNewPage(12);
         const prevY = currentY;
-        page.drawText(categoryTitle, { x: margin, y: currentY - 9.5, size: 9.5, font: helveticaBold, color: black });
+        drawSanitizedText(page, categoryTitle, { x: margin, y: currentY - 9.5, size: 9.5, font: helveticaBold, color: black });
         drawTextWrapped(cat.skills.join(', '), helveticaFont, 9.5, black, margin + titleWidth);
         currentY = prevY - (prevY - currentY) + 2; 
       }
@@ -283,16 +308,16 @@ export async function generateResumePdf(resume: StructuredResume): Promise<PdfGe
         const dates = exp.dates;
 
         checkNewPage(15);
-        page.drawText(roleCompany, { x: margin, y: currentY - 9.5, size: 9.5, font: helveticaBold });
+        drawSanitizedText(page, roleCompany, { x: margin, y: currentY - 9.5, size: 9.5, font: helveticaBold });
         if (dates) {
-          const dateWidth = helveticaBold.widthOfTextAtSize(dates, 9.5);
-          page.drawText(dates, { x: 612 - margin - dateWidth, y: currentY - 9.5, size: 9.5, font: helveticaBold });
+          const dateWidth = getSanitizedWidth(helveticaBold, dates, 9.5);
+          drawSanitizedText(page, dates, { x: 612 - margin - dateWidth, y: currentY - 9.5, size: 9.5, font: helveticaBold });
         }
         currentY -= 9.5 * 1.2 + 2;
 
         if (exp.location) {
           checkNewPage(12);
-          page.drawText(exp.location, { x: margin, y: currentY - 9.5, size: 9.5, font: helveticaOblique });
+          drawSanitizedText(page, exp.location, { x: margin, y: currentY - 9.5, size: 9.5, font: helveticaOblique });
           currentY -= 9.5 * 1.2 + 2;
         } else {
           currentY -= 2;
@@ -301,9 +326,9 @@ export async function generateResumePdf(resume: StructuredResume): Promise<PdfGe
         if (exp.bullets && exp.bullets.length > 0) {
           for (const bullet of exp.bullets) {
             const bulletSymbol = '•  ';
-            const bw = helveticaFont.widthOfTextAtSize(bulletSymbol, 9.5);
+            const bw = getSanitizedWidth(helveticaFont, bulletSymbol, 9.5);
             checkNewPage(12);
-            page.drawText(bulletSymbol, { x: margin + 10, y: currentY - 9.5, size: 9.5, font: helveticaFont, color: black });
+            drawSanitizedText(page, bulletSymbol, { x: margin + 10, y: currentY - 9.5, size: 9.5, font: helveticaFont, color: black });
 
             const prevY = currentY;
             drawTextWrapped(bullet, helveticaFont, 9.5, black, margin + 10 + bw);
@@ -322,10 +347,10 @@ export async function generateResumePdf(resume: StructuredResume): Promise<PdfGe
         const dates = edu.dates;
 
         checkNewPage(15);
-        page.drawText(degSchool, { x: margin, y: currentY - 9.5, size: 9.5, font: helveticaBold });
+        drawSanitizedText(page, degSchool, { x: margin, y: currentY - 9.5, size: 9.5, font: helveticaBold });
         if (dates) {
-          const dateWidth = helveticaBold.widthOfTextAtSize(dates, 9.5);
-          page.drawText(dates, { x: 612 - margin - dateWidth, y: currentY - 9.5, size: 9.5, font: helveticaBold });
+          const dateWidth = getSanitizedWidth(helveticaBold, dates, 9.5);
+          drawSanitizedText(page, dates, { x: 612 - margin - dateWidth, y: currentY - 9.5, size: 9.5, font: helveticaBold });
         }
         currentY -= 9.5 * 1.2 + 6;
       }
@@ -337,15 +362,15 @@ export async function generateResumePdf(resume: StructuredResume): Promise<PdfGe
       drawSectionHeading('PROJECTS');
       for (const proj of resume.projects) {
         checkNewPage(12);
-        page.drawText(proj.name, { x: margin, y: currentY - 9.5, size: 9.5, font: helveticaBold });
+        drawSanitizedText(page, proj.name, { x: margin, y: currentY - 9.5, size: 9.5, font: helveticaBold });
         currentY -= 9.5 * 1.2 + 3;
 
         if (proj.bullets && proj.bullets.length > 0) {
           for (const bullet of proj.bullets) {
             const bulletSymbol = '•  ';
-            const bw = helveticaFont.widthOfTextAtSize(bulletSymbol, 9.5);
+            const bw = getSanitizedWidth(helveticaFont, bulletSymbol, 9.5);
             checkNewPage(12);
-            page.drawText(bulletSymbol, { x: margin + 10, y: currentY - 9.5, size: 9.5, font: helveticaFont });
+            drawSanitizedText(page, bulletSymbol, { x: margin + 10, y: currentY - 9.5, size: 9.5, font: helveticaFont });
 
             const prevY = currentY;
             drawTextWrapped(bullet, helveticaFont, 9.5, black, margin + 10 + bw);
@@ -361,9 +386,9 @@ export async function generateResumePdf(resume: StructuredResume): Promise<PdfGe
       drawSectionHeading('CERTIFICATIONS');
       for (const cert of resume.certifications) {
         const bulletSymbol = '•  ';
-        const bw = helveticaFont.widthOfTextAtSize(bulletSymbol, 9.5);
+        const bw = getSanitizedWidth(helveticaFont, bulletSymbol, 9.5);
         checkNewPage(12);
-        page.drawText(bulletSymbol, { x: margin + 10, y: currentY - 9.5, size: 9.5, font: helveticaFont });
+        drawSanitizedText(page, bulletSymbol, { x: margin + 10, y: currentY - 9.5, size: 9.5, font: helveticaFont });
         drawTextWrapped(cert, helveticaFont, 9.5, black, margin + 10 + bw);
       }
     }
@@ -371,7 +396,7 @@ export async function generateResumePdf(resume: StructuredResume): Promise<PdfGe
     const pdfBytes = await pdfDoc.save();
     return { success: true, data: Buffer.from(pdfBytes) };
   } catch (error: any) {
-    logger.error('Error generating PDF:', { error });
+    logger.error('Error generating PDF', { message: (error as Error).message, stack: (error as Error).stack });
     return { success: false, error: 'Could not generate document' };
   }
 }

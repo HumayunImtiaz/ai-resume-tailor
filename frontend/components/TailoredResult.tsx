@@ -82,21 +82,23 @@ export default function TailoredResult({
     setDownloadError("");
 
     try {
-      const response = await apiFetch(`/api/jobs/${jobDescriptionId}/download`);
-      if (!response.ok) {
-        let errorMsg = "Failed to download";
-        try {
-          const errData = await response.json();
-          if (errData.message) errorMsg = errData.message;
-        } catch (_) {}
-        throw new Error(errorMsg);
+      const response = await apiFetch(`/api/jobs/${jobDescriptionId}/download`, { method: "POST" });
+      const json = await response.json();
+
+      if (!json.success) {
+        throw new Error(json.message || "Failed to download");
       }
 
-      const blob = await response.blob();
+      const byteCharacters = atob(json.data);
+      const byteArray = new Uint8Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteArray[i] = byteCharacters.charCodeAt(i);
+      }
+      const blob = new Blob([byteArray], { type: json.mimeType });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "Tailored_Resume.docx";
+      a.download = json.filename || "Tailored_Resume.docx";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -114,21 +116,23 @@ export default function TailoredResult({
     setDownloadError("");
 
     try {
-      const response = await apiFetch(`/api/jobs/${jobDescriptionId}/download-pdf`);
-      if (!response.ok) {
-        let errorMsg = "Failed to download";
-        try {
-          const errData = await response.json();
-          if (errData.message) errorMsg = errData.message;
-        } catch (_) {}
-        throw new Error(errorMsg);
+      const response = await apiFetch(`/api/jobs/${jobDescriptionId}/download-pdf`, { method: "POST" });
+      const json = await response.json();
+
+      if (!json.success) {
+        throw new Error(json.message || "Failed to download");
       }
 
-      const blob = await response.blob();
+      const byteCharacters = atob(json.data);
+      const byteArray = new Uint8Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteArray[i] = byteCharacters.charCodeAt(i);
+      }
+      const blob = new Blob([byteArray], { type: json.mimeType });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "Tailored_Resume.pdf";
+      a.download = json.filename || "Tailored_Resume.pdf";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

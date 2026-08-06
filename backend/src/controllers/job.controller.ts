@@ -59,9 +59,13 @@ export const jobController = {
     }
 
     if (result.data) {
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-      res.setHeader('Content-Disposition', 'attachment; filename="tailored-resume.docx"');
-      res.send(result.data);
+      const base64 = Buffer.from(result.data).toString('base64');
+      res.json({
+        success: true,
+        data: base64,
+        filename: 'tailored-resume.docx',
+        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      });
     }
   }) as RequestHandler,
 
@@ -78,9 +82,13 @@ export const jobController = {
     }
 
     if (result.data) {
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', 'attachment; filename="tailored-resume.pdf"');
-      res.send(result.data);
+      const base64 = Buffer.from(result.data).toString('base64');
+      res.json({
+        success: true,
+        data: base64,
+        filename: 'tailored-resume.pdf',
+        mimeType: 'application/pdf',
+      });
     }
   }) as RequestHandler,
 

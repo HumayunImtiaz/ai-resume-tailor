@@ -5,100 +5,16 @@ import { authLimiter } from '../middlewares/rateLimiter.middleware';
 
 const router = Router();
 
-/**
- * @swagger
- * /api/auth/signup:
- *   post:
- *     summary: Register a new user
- *     description: "Rate limited: max 10 requests per 15 minutes"
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - name
- *               - email
- *               - password
- *             properties:
- *               name:
- *                 type: string
- *               email:
- *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       201:
- *         description: Success, returns token and user
- *       400:
- *         description: Validation error
- *       409:
- *         description: Email already registered
- */
+// POST /api/auth/signup - Register a new user account (Rate limited)
 router.post('/signup', authLimiter, authController.signup);
 
-/**
- * @swagger
- * /api/auth/login:
- *   post:
- *     summary: Login a user
- *     description: "Rate limited: max 10 requests per 15 minutes"
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *               - password
- *             properties:
- *               email:
- *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       200:
- *         description: Login successful
- *       400:
- *         description: Validation error
- *       401:
- *         description: Unauthorized
- */
+// POST /api/auth/login - Authenticate user & receive JWT token (Rate limited)
 router.post('/login', authLimiter, authController.login);
 
-/**
- * @swagger
- * /api/auth/me:
- *   get:
- *     summary: Get current user profile
- *     tags: [Auth]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Profile retrieved successfully
- *       401:
- *         description: Unauthorized
- *       404:
- *         description: User not found
- */
+// GET /api/auth/me - Retrieve current authenticated user profile
 router.get('/me', requireAuth, authController.getProfile);
 
-/**
- * @swagger
- * /api/auth/logout:
- *   post:
- *     summary: Logout a user
- *     description: "Clears the HttpOnly token cookie"
- *     tags: [Auth]
- *     responses:
- *       200:
- *         description: Logout successful
- */
+// POST /api/auth/logout - Log out user and clear auth cookies
 router.post('/logout', authController.logout);
 
 export default router;

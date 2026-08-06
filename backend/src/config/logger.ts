@@ -1,9 +1,10 @@
 import winston from 'winston';
 import { env } from './env';
 
-const { combine, timestamp, colorize, printf, json } = winston.format;
+const { combine, timestamp, colorize, printf, json, errors } = winston.format;
 
 const devFormat = combine(
+  errors({ stack: true }),
   colorize(),
   timestamp({ format: 'HH:mm:ss' }),
   printf(({ timestamp, level, message, ...meta }) => {
@@ -13,6 +14,7 @@ const devFormat = combine(
 );
 
 const prodFormat = combine(
+  errors({ stack: true }),
   timestamp(),
   json()
 );
