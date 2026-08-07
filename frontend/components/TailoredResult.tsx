@@ -26,7 +26,7 @@ import { useDashboard } from "@/lib/DashboardContext";
 export interface TailoredResultProps {
   matchScore: number | null;
   matchedSkills?: string[];
-  missingSkills?: { skill: string; reason: string }[];
+  missingSkills?: any[];
   atsAnalysis?: {
     initialMatchScore?: number;
     initialMissingSkills?: string[];
@@ -43,14 +43,16 @@ export interface TailoredResultProps {
   jobDescriptionId: string | null;
 }
 
+const pt = (n: number) => `calc(${n} * 100cqi / 612)`;
+
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      fontSize: "11pt",
+      fontSize: pt(11),
       fontWeight: "bold",
       color: "#000",
-      marginTop: "10pt",
-      marginBottom: "5pt",
+      marginTop: pt(10),
+      marginBottom: pt(5),
     }}>
       {children}
     </div>
@@ -407,13 +409,13 @@ export default function TailoredResult({
             {missingSkills.map((item, idx) => (
               <div
                 key={typeof item === 'string' ? item : item.skill || idx}
-                className="flex items-start gap-3 p-3.5 rounded-xl bg-primary/5 border border-primary/15"
+                className="flex flex-col md:flex-row items-start gap-2 md:gap-3 p-3.5 rounded-xl bg-primary/5 border border-primary/15"
               >
-                <span className="px-2.5 py-1 rounded-lg bg-primary/15 text-heading text-xs font-bold border border-primary/25 shrink-0 mt-0.5">
+                <span className="inline-block px-2.5 py-1 rounded-lg bg-primary/15 text-heading text-xs font-bold border border-primary/25 mt-0.5 max-w-full break-words">
                   {typeof item === 'string' ? item : item.skill}
                 </span>
                 {typeof item !== 'string' && item.reason && (
-                  <span className="text-xs text-body leading-relaxed">{item.reason}</span>
+                  <span className="text-xs text-body leading-relaxed pt-1 md:pt-1.5">{item.reason}</span>
                 )}
               </div>
             ))}
@@ -502,22 +504,7 @@ export default function TailoredResult({
 
           {plainText && (
             <div className="flex items-center gap-2 self-start sm:self-auto relative flex-wrap">
-              <button
-                onClick={handleCopy}
-                className="px-3.5 py-2 rounded-xl border border-heading/15 bg-white text-heading hover:bg-heading hover:text-white transition-all flex items-center gap-1.5 text-xs font-bold shadow-sm"
-                title="Copy to clipboard"
-              >
-                {isCopied ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
-                {isCopied ? <span className="text-success">Copied!</span> : "Copy"}
-              </button>
-              <button
-                onClick={handleDownloadTxt}
-                className="px-3.5 py-2 rounded-xl border border-heading/15 bg-white text-heading hover:bg-heading hover:text-white transition-all flex items-center gap-1.5 text-xs font-bold shadow-sm"
-                title="Download as .txt"
-              >
-                <Download className="w-3.5 h-3.5" />
-                .txt
-              </button>
+
               {jobDescriptionId && (
                 <>
                   <button
@@ -594,20 +581,22 @@ export default function TailoredResult({
 
         {/* ── WYSIWYG Document Paper Sheet ── */}
         {tailoredResume ? (
-          <div className="bg-heading/5 rounded-2xl p-4 overflow-x-auto">
-            <div
-              className="bg-white border text-left border-[#d0d0d0] shadow-[0_12px_40px_rgba(0,0,0,0.08)] mx-auto overflow-hidden shrink-0"
-              style={{
-                width: "612pt",
-                minHeight: "792pt",
-                padding: "36pt",
-                boxSizing: "border-box",
-                fontFamily: "Helvetica, Arial, sans-serif",
-                color: "#000",
-                lineHeight: "1.2"
-              }}
-            >
-              {renderWysiwygResume(tailoredResume)}
+          <div className="bg-heading/5 rounded-2xl p-4 sm:p-8 overflow-hidden w-full flex justify-center">
+            <div style={{ containerType: "inline-size", width: "100%", maxWidth: "816px" }}>
+              <div
+                className="bg-white border text-left border-[#d0d0d0] shadow-[0_12px_40px_rgba(0,0,0,0.08)] mx-auto overflow-hidden shrink-0"
+                style={{
+                  width: "100%",
+                  aspectRatio: "8.5 / 11",
+                  padding: pt(36),
+                  boxSizing: "border-box",
+                  fontFamily: "Helvetica, Arial, sans-serif",
+                  color: "#000",
+                  lineHeight: 1.2
+                }}
+              >
+                {renderWysiwygResume(tailoredResume)}
+              </div>
             </div>
           </div>
         ) : (
@@ -695,19 +684,19 @@ function renderWysiwygResume(r: any): React.ReactNode {
     }
 
     sections.push(
-      <div key="header" style={{ textAlign: "center", marginBottom: "5pt" }}>
+      <div key="header" style={{ textAlign: "center", marginBottom: pt(5) }}>
         {fullName && (
-          <div style={{ fontSize: "22pt", fontWeight: "bold", color: "#000", marginBottom: "2pt" }}>
+          <div style={{ fontSize: pt(22), fontWeight: "bold", color: "#000", marginBottom: pt(2) }}>
             {fullName}
           </div>
         )}
         {title && (
-          <div style={{ fontSize: "11pt", color: "#555", marginBottom: "5pt" }}>
+          <div style={{ fontSize: pt(11), color: "#555", marginBottom: pt(5) }}>
             {title}
           </div>
         )}
         {contactParts.length > 0 && (
-          <div style={{ fontSize: "9pt", color: "#000", display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "6pt", marginBottom: "10pt" }}>
+          <div style={{ fontSize: pt(9), color: "#000", display: "flex", flexWrap: "wrap", justifyContent: "center", gap: pt(6), marginBottom: pt(10) }}>
             {contactParts.map((part, idx) => (
               <React.Fragment key={idx}>
                 {idx > 0 && <span style={{ color: "#000" }}>  |  </span>}
@@ -721,7 +710,7 @@ function renderWysiwygResume(r: any): React.ReactNode {
           </div>
         )}
         {/* Horizontal divider matching PDF */}
-        <div style={{ borderBottom: "1px solid #000", marginBottom: "10pt" }} />
+        <div style={{ borderBottom: `${pt(1)} solid #000`, marginBottom: pt(10) }} />
       </div>
     );
   }
@@ -729,9 +718,9 @@ function renderWysiwygResume(r: any): React.ReactNode {
   /* ── Summary ── */
   if (r.summary) {
     sections.push(
-      <div key="summary" style={{ marginBottom: "10pt" }}>
+      <div key="summary" style={{ marginBottom: pt(10) }}>
         <SectionHeading>PROFESSIONAL SUMMARY</SectionHeading>
-        <p style={{ fontSize: "9.5pt", color: "#000", margin: 0, textAlign: "justify" }}>{r.summary}</p>
+        <p style={{ fontSize: pt(9.5), color: "#000", margin: 0, textAlign: "justify" }}>{r.summary}</p>
       </div>
     );
   }
@@ -739,11 +728,11 @@ function renderWysiwygResume(r: any): React.ReactNode {
   /* ── Skills (inline format: Category: Skill1, Skill2, Skill3) ── */
   if (r.skillCategories && Array.isArray(r.skillCategories) && r.skillCategories.length > 0) {
     sections.push(
-      <div key="skills" style={{ marginBottom: "8pt" }}>
+      <div key="skills" style={{ marginBottom: pt(8) }}>
         <SectionHeading>SKILLS & CORE COMPETENCIES</SectionHeading>
-        <div style={{ display: "flex", flexDirection: "column", gap: "2pt" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: pt(2) }}>
           {r.skillCategories.map((cat: any, i: number) => (
-            <div key={i} style={{ fontSize: "9.5pt", color: "#000" }}>
+            <div key={i} style={{ fontSize: pt(9.5), color: "#000" }}>
               <span style={{ fontWeight: "bold" }}>{cat.category}: </span>
               <span>{cat.skills?.join(", ")}</span>
             </div>
@@ -756,31 +745,31 @@ function renderWysiwygResume(r: any): React.ReactNode {
   /* ── Experience ── */
   if (r.experience && Array.isArray(r.experience) && r.experience.length > 0) {
     sections.push(
-      <div key="experience" style={{ marginBottom: "10pt" }}>
+      <div key="experience" style={{ marginBottom: pt(10) }}>
         <SectionHeading>PROFESSIONAL EXPERIENCE</SectionHeading>
-        <div style={{ display: "flex", flexDirection: "column", gap: "10pt" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: pt(10) }}>
           {r.experience.map((exp: any, i: number) => (
             <div key={i}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                <span style={{ fontSize: "9.5pt", fontWeight: "bold", color: "#000" }}>
+                <span style={{ fontSize: pt(9.5), fontWeight: "bold", color: "#000" }}>
                   {exp.role || exp.jobTitle || exp.title} - {exp.company}
                 </span>
                 {exp.dates && (
-                  <span style={{ fontSize: "9.5pt", fontWeight: "bold", color: "#000" }}>
+                  <span style={{ fontSize: pt(9.5), fontWeight: "bold", color: "#000" }}>
                     {exp.dates}
                   </span>
                 )}
               </div>
               {exp.location && (
-                <div style={{ fontSize: "9.5pt", fontStyle: "italic", color: "#000", marginTop: "2pt" }}>
+                <div style={{ fontSize: pt(9.5), fontStyle: "italic", color: "#000", marginTop: pt(2) }}>
                   {exp.location}
                 </div>
               )}
               {exp.bullets && Array.isArray(exp.bullets) && exp.bullets.length > 0 && (
-                <div style={{ marginTop: "2pt", display: "flex", flexDirection: "column", gap: "2pt" }}>
+                <div style={{ marginTop: pt(2), display: "flex", flexDirection: "column", gap: pt(2) }}>
                   {exp.bullets.map((b: string, j: number) => (
-                    <div key={j} style={{ fontSize: "9.5pt", color: "#000", display: "flex" }}>
-                      <span style={{ width: "15pt", flexShrink: 0, paddingLeft: "10pt" }}>•</span>
+                    <div key={j} style={{ fontSize: pt(9.5), color: "#000", display: "flex", alignItems: "flex-start" }}>
+                      <span style={{ width: pt(15), flexShrink: 0, paddingLeft: pt(10) }}>•</span>
                       <span style={{ flex: 1, textAlign: "justify" }}>{b}</span>
                     </div>
                   ))}
@@ -796,16 +785,16 @@ function renderWysiwygResume(r: any): React.ReactNode {
   /* ── Education ── */
   if (r.education && Array.isArray(r.education) && r.education.length > 0) {
     sections.push(
-      <div key="education" style={{ marginBottom: "4pt" }}>
+      <div key="education" style={{ marginBottom: pt(4) }}>
         <SectionHeading>EDUCATION</SectionHeading>
-        <div style={{ display: "flex", flexDirection: "column", gap: "6pt" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: pt(6) }}>
           {r.education.map((edu: any, i: number) => (
             <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-              <span style={{ fontSize: "9.5pt", fontWeight: "bold", color: "#000" }}>
+              <span style={{ fontSize: pt(9.5), fontWeight: "bold", color: "#000" }}>
                 {edu.degree || edu.title} - {edu.school}
               </span>
               {edu.dates && (
-                <span style={{ fontSize: "9.5pt", fontWeight: "bold", color: "#000" }}>
+                <span style={{ fontSize: pt(9.5), fontWeight: "bold", color: "#000" }}>
                   {edu.dates}
                 </span>
               )}
@@ -819,19 +808,19 @@ function renderWysiwygResume(r: any): React.ReactNode {
   /* ── Projects ── */
   if (r.projects && Array.isArray(r.projects) && r.projects.length > 0) {
     sections.push(
-      <div key="projects" style={{ marginBottom: "8pt" }}>
+      <div key="projects" style={{ marginBottom: pt(8) }}>
         <SectionHeading>PROJECTS</SectionHeading>
-        <div style={{ display: "flex", flexDirection: "column", gap: "8pt" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: pt(8) }}>
           {r.projects.map((proj: any, i: number) => (
             <div key={i}>
-              <div style={{ fontSize: "9.5pt", fontWeight: "bold", color: "#000", marginBottom: "3pt" }}>
+              <div style={{ fontSize: pt(9.5), fontWeight: "bold", color: "#000", marginBottom: pt(3) }}>
                 {proj.name || proj.title}
               </div>
               {proj.bullets && Array.isArray(proj.bullets) && proj.bullets.length > 0 && (
-                <div style={{ display: "flex", flexDirection: "column", gap: "2pt" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: pt(2) }}>
                   {proj.bullets.map((b: string, j: number) => (
-                    <div key={j} style={{ fontSize: "9.5pt", color: "#000", display: "flex" }}>
-                      <span style={{ width: "15pt", flexShrink: 0, paddingLeft: "10pt" }}>•</span>
+                    <div key={j} style={{ fontSize: pt(9.5), color: "#000", display: "flex", alignItems: "flex-start" }}>
+                      <span style={{ width: pt(15), flexShrink: 0, paddingLeft: pt(10) }}>•</span>
                       <span style={{ flex: 1, textAlign: "justify" }}>{b}</span>
                     </div>
                   ))}
@@ -847,12 +836,12 @@ function renderWysiwygResume(r: any): React.ReactNode {
   /* ── Certifications ── */
   if (r.certifications && Array.isArray(r.certifications) && r.certifications.length > 0) {
     sections.push(
-      <div key="certs" style={{ marginBottom: "8pt" }}>
+      <div key="certs" style={{ marginBottom: pt(8) }}>
         <SectionHeading>CERTIFICATIONS</SectionHeading>
-        <div style={{ display: "flex", flexDirection: "column", gap: "2pt" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: pt(2) }}>
           {r.certifications.map((c: string, i: number) => (
-            <div key={i} style={{ fontSize: "9.5pt", color: "#000", display: "flex" }}>
-              <span style={{ width: "15pt", flexShrink: 0, paddingLeft: "10pt" }}>•</span>
+            <div key={i} style={{ fontSize: pt(9.5), color: "#000", display: "flex", alignItems: "flex-start" }}>
+              <span style={{ width: pt(15), flexShrink: 0, paddingLeft: pt(10) }}>•</span>
               <span style={{ flex: 1, textAlign: "justify" }}>{c}</span>
             </div>
           ))}
