@@ -174,5 +174,22 @@ export const resumeService = {
       logger.error('List tailored versions error', { error });
       return { success: false as const, error: 'Something went wrong, please try again' };
     }
+  },
+
+  deleteAllTailoredVersions: async (userId: string) => {
+    try {
+      const result = await prisma.tailoredVersion.deleteMany({
+        where: {
+          resume: {
+            userId
+          }
+        }
+      });
+
+      return { success: true as const, data: { count: result.count } };
+    } catch (error) {
+      logger.error('Delete all tailored versions error', { error });
+      return { success: false as const, error: 'Something went wrong, please try again' };
+    }
   }
 };

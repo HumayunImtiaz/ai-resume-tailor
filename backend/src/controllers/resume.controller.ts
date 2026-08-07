@@ -74,5 +74,18 @@ export const resumeController = {
     }
 
     sendResponse(res, 200, 'success', result.data, 'Tailored versions retrieved successfully');
+  }) as RequestHandler,
+
+  deleteAllTailoredVersions: (async (req: Request, res: Response) => {
+    const userId = req.userId as string;
+
+    const result = await resumeService.deleteAllTailoredVersions(userId);
+
+    if (!result.success) {
+      sendResponse(res, 500, 'error', null, result.error as string);
+      return;
+    }
+
+    sendResponse(res, 200, 'success', result.data, 'All tailored versions deleted successfully');
   }) as RequestHandler
 };

@@ -36,6 +36,7 @@ interface DashboardContextType {
   isLoading: boolean;
   isCheckingAuth: boolean;
   refreshDashboard: () => Promise<void>;
+  removeVersion: (versionId: string) => void;
   handleLogout: () => void;
 }
 
@@ -103,6 +104,10 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, [router, fetchDashboardData]);
 
+  const removeVersion = (versionId: string) => {
+    setVersions((prev) => prev.filter((v) => v.id !== versionId));
+  };
+
   const handleLogout = async () => {
     try {
       await apiFetch("/api/auth/logout", { method: "POST" });
@@ -126,6 +131,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         isCheckingAuth,
         refreshDashboard: fetchDashboardData,
+        removeVersion,
         handleLogout,
       }}
     >

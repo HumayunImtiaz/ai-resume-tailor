@@ -129,4 +129,22 @@ router.delete('/:id', requireAuth, resumeController.deleteResume);
  */
 router.get('/:id/versions', requireAuth, resumeController.listTailoredVersions);
 
+/**
+ * @swagger
+ * /api/resumes/versions/all:
+ *   delete:
+ *     summary: Delete all tailored resume versions for the user
+ *     tags: [Resumes]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: All tailored versions deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.delete('/versions/all', requireAuth, resumeController.deleteAllTailoredVersions);
+
 export default router;

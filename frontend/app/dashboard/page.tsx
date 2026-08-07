@@ -18,7 +18,7 @@ import ResumeUploader from "@/components/ResumeUploader";
 import TailorProgress from "@/components/TailorProgress";
 import TailoredResult from "@/components/TailoredResult";
 
-type PageState = "form" | "processing" | "completed" | "failed";
+type PageState = "form" | "analyzing" | "analysisReview" | "processing" | "completed" | "failed";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -44,6 +44,9 @@ export default function DashboardPage() {
   const [missingSkills, setMissingSkills] = useState<any[]>([]);
   const [atsAnalysis, setAtsAnalysis] = useState<any>(null);
   const [tailoredResume, setTailoredResume] = useState<any>(null);
+
+  // Initial Analysis
+  const [initialAnalysis, setInitialAnalysis] = useState<any>(null);
 
   // Cleanup polling on unmount
   useEffect(() => {
@@ -96,7 +99,7 @@ export default function DashboardPage() {
     [refreshDashboard]
   );
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleAnalyze = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError("");
 
@@ -114,12 +117,43 @@ export default function DashboardPage() {
     }
 
     setIsSubmitting(true);
+    setPageState("analyzing");
+
+    try {
+      const res = await apiFetch("/api/jobs/analyze", {
+        method: "POST",
+        body: JSON.stringify({
+          resumeId: activeResume.id,
+          title: title.trim(),
+          company: company.trim() || undefined,
+          rawText,
+        }),
+      });
+      const json = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(json.message || "Failed to analyze job match.");
+      }
+
+      setInitialAnalysis(json.data);
+      setPageState("analysisReview");
+    } catch (err: any) {
+      setFormError(err.message || "Failed to analyze job. Please try again.");
+      setPageState("form");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleStartTailoring = async () => {
+    setFormError("");
+    setIsSubmitting(true);
 
     try {
       const res = await apiFetch("/api/jobs", {
         method: "POST",
         body: JSON.stringify({
-          resumeId: activeResume.id,
+          resumeId: activeResume?.id,
           title: title.trim(),
           company: company.trim() || undefined,
           rawText,
@@ -132,6 +166,7 @@ export default function DashboardPage() {
       if (!jobId) {
         setFormError("Unexpected response — no job ID returned.");
         setIsSubmitting(false);
+        setPageState("analysisReview");
         return;
       }
 
@@ -141,6 +176,7 @@ export default function DashboardPage() {
       startPolling(jobId);
     } catch (err: any) {
       setFormError(err.message || "Failed to create job. Please try again.");
+      setPageState("analysisReview");
     } finally {
       setIsSubmitting(false);
     }
@@ -154,6 +190,7 @@ export default function DashboardPage() {
     setQueueJobId(null);
     setJobDescId(null);
     setQueueState("waiting");
+    setInitialAnalysis(null);
     setMatchScore(null);
     setMatchedSkills([]);
     setMissingSkills([]);
@@ -222,7 +259,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleAnalyze} className="space-y-6">
             {/* Job Title */}
             <div>
               <label htmlFor="job-title" className="block text-heading font-semibold text-sm mb-1.5">
@@ -305,11 +342,107 @@ export default function DashboardPage() {
               ) : (
                 <>
                   <Sparkles className="w-5 h-5 fill-heading/20" />
-                  Generate Tailored Resume
+                  Analyze Match
                 </>
               )}
             </button>
           </form>
+        </div>
+      )}
+
+      {/* ── ANALYZING STATE ── */}
+      {pageState === "analyzing" && (
+        <div className="w-full bg-white/80 backdrop-blur-xl border border-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 md:p-12 flex flex-col items-center text-center">
+          <div className="w-14 h-14 border-4 border-primary border-t-transparent rounded-full animate-spin mb-6" />
+          <h2 className="font-fraunces text-3xl font-bold text-heading mb-2">
+            Analyzing Match...
+          </h2>
+          <p className="text-body text-sm max-w-md mx-auto">
+            Reviewing your base resume against the job requirements to find skill gaps.
+          </p>
+        </div>
+      )}
+
+      {/* ── ANALYSIS REVIEW STATE (BEFORE) ── */}
+      {pageState === "analysisReview" && initialAnalysis && (
+        <div className="w-full space-y-6">
+          <div className="w-full bg-white/80 backdrop-blur-xl border border-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 md:p-10 flex flex-col items-center text-center">
+            <h2 className="font-fraunces text-3xl font-bold text-heading mb-2">
+              Initial Match Analysis
+            </h2>
+            <p className="text-body text-sm max-w-md mx-auto mb-8">
+              Here is how your current resume stacks up against the job description before tailoring.
+            </p>
+
+            <div className="flex flex-col items-center p-6 rounded-2xl bg-navy-50 border border-navy-100 mb-8 w-full max-w-[240px]">
+              <span className="text-xs font-bold uppercase tracking-wider text-navy-400 mb-2">Original Resume ATS Score</span>
+              <span className="text-5xl font-bold text-navy-900" style={{ fontVariantNumeric: "tabular-nums" }}>
+                {initialAnalysis.initialMatchScore}%
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full text-left max-w-2xl mx-auto">
+              {/* Missing Skills */}
+              <div className="p-5 rounded-2xl bg-primary/5 border border-primary/20">
+                <h4 className="text-sm font-bold text-primary mb-3 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" /> Noticed Gaps
+                </h4>
+                <ul className="space-y-2">
+                  {initialAnalysis.missingSkills?.slice(0, 5).map((skill: string, i: number) => (
+                    <li key={i} className="text-sm text-heading/80 flex items-start gap-2">
+                      <span className="text-primary mt-1 shrink-0">•</span> {skill}
+                    </li>
+                  ))}
+                  {initialAnalysis.missingSkills?.length === 0 && (
+                    <li className="text-sm text-heading/60 italic">No major missing technical skills found.</li>
+                  )}
+                </ul>
+              </div>
+
+              {/* Strengths */}
+              <div className="p-5 rounded-2xl bg-success/10 border border-success/20">
+                <h4 className="text-sm font-bold text-success mb-3 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" /> Current Strengths
+                </h4>
+                <ul className="space-y-2">
+                  {initialAnalysis.strengths?.slice(0, 5).map((strength: string, i: number) => (
+                    <li key={i} className="text-sm text-heading/80 flex items-start gap-2">
+                      <span className="text-success mt-1 shrink-0">•</span> {strength}
+                    </li>
+                  ))}
+                  {initialAnalysis.strengths?.length === 0 && (
+                    <li className="text-sm text-heading/60 italic">Could not identify distinct strengths.</li>
+                  )}
+                </ul>
+              </div>
+            </div>
+
+            <div className="w-full max-w-2xl mx-auto mt-8 flex flex-col sm:flex-row gap-4">
+              <button
+                onClick={() => setPageState("form")}
+                className="flex-1 py-4 rounded-xl border border-heading/15 bg-white text-heading hover:bg-heading/5 transition-colors font-bold text-base"
+              >
+                Back to Edit
+              </button>
+              <button
+                onClick={handleStartTailoring}
+                disabled={isSubmitting}
+                className="flex-1 py-4 rounded-xl bg-primary text-card hover:bg-primary-hover transition-colors font-bold text-base flex items-center justify-center gap-2"
+              >
+                {isSubmitting ? (
+                  <div className="w-5 h-5 border-2 border-heading border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <Sparkles className="w-5 h-5 fill-heading/20" />
+                    Optimize Resume Now
+                  </>
+                )}
+              </button>
+            </div>
+            {formError && (
+              <p className="text-error text-sm font-semibold mt-4">{formError}</p>
+            )}
+          </div>
         </div>
       )}
 

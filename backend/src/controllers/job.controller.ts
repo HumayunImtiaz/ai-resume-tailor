@@ -4,6 +4,30 @@ import { jobService } from '../services/job.service';
 import { sendResponse } from '../utils/apiResponse';
 
 export const jobController = {
+  analyzeJob: (async (req: Request, res: Response) => {
+    const validationResult = createJobSchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+      const errorMessage = validationResult.error.issues[0]?.message || 'Validation failed';
+      sendResponse(res, 400, 'error', null, errorMessage);
+      return;
+    }
+
+    const userId = req.userId as string;
+    const result = await jobService.analyzeJobMatch(userId, validationResult.data);
+
+    if (!result.success) {
+      if (result.error === 'Resume not found') {
+        sendResponse(res, 404, 'error', null, result.error);
+      } else {
+        sendResponse(res, 500, 'error', null, result.error);
+      }
+      return;
+    }
+
+    sendResponse(res, 200, 'success', result.data, 'Job text analyzed successfully');
+  }) as RequestHandler,
+
   createJob: (async (req: Request, res: Response) => {
     const validationResult = createJobSchema.safeParse(req.body);
 
@@ -108,5 +132,33 @@ export const jobController = {
     }
 
     sendResponse(res, 200, 'success', result.data, 'Tailored version detail retrieved successfully');
+  }) as RequestHandler,
+
+  deleteTailoredVersion: (async (req: Request, res: Response) => {
+    const userId = req.userId as string;
+    const versionId = req.params.id as string;
+
+    const result = await jobService.deleteTailoredVersion(userId, versionId);
+
+    if (!result.success) {
+      const statusCode = result.error === 'Tailored version not found' ? 404 : 500;
+      sendResponse(res, statusCode, 'error', null, result.error);
+      return;
+    }
+
+    sendResponse(res, 200, 'success', null, 'Tailored version deleted successfully');
+  }) as RequestHandler,
+
+  deleteAllTailoredVersions: (async (req: Request, res: Response) => {
+    const userId = req.userId as string;
+
+    const result = await jobService.deleteAllTailoredVersions(userId);
+
+    if (!result.success) {
+      sendResponse(res, 500, 'error', null, result.error);
+      return;
+    }
+
+    sendResponse(res, 200, 'success', null, 'All tailored versions deleted successfully');
   }) as RequestHandler,
 };

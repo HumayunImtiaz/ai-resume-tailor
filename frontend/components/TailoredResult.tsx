@@ -1,41 +1,62 @@
 "use client";
 
 import React, { useState } from "react";
-import { CheckCircle2, Copy, Check, Download, FileText, AlertTriangle, Lightbulb, Target, ShieldCheck } from "lucide-react";
+import {
+  CheckCircle2,
+  Copy,
+  Check,
+  Download,
+  FileText,
+  AlertTriangle,
+  Lightbulb,
+  Target,
+  ShieldCheck,
+  TrendingUp,
+  ArrowUp,
+  Zap,
+  Plus,
+  MoreVertical,
+  Trash2,
+  X
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
+import { useDashboard } from "@/lib/DashboardContext";
 
 export interface TailoredResultProps {
-  /** Match score 0–100 */
   matchScore: number | null;
-  /** Skills from the JD found in the resume/cover letter */
   matchedSkills?: string[];
-  /** Skills missing, each with a reason */
   missingSkills?: { skill: string; reason: string }[];
-  /** ATS analysis with strengths, gaps, recommendations */
   atsAnalysis?: {
+    initialMatchScore?: number;
+    initialMissingSkills?: string[];
+    initialMissingKeywords?: string[];
+    scoreImprovement?: number;
+    addedSkills?: string[];
+    addedKeywords?: string[];
+    improvedSections?: string[];
     strengths?: string[];
     gaps?: string[];
     recommendations?: string[];
   } | null;
-  /** The structuerror/parsed tailored resume object */
   tailoredResume: any;
-  /** Job description ID — used for the .docx download endpoint */
   jobDescriptionId: string | null;
 }
 
-/** Renders a section heading in the resume paper preview */
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h4 className="text-xs font-bold uppercase tracking-widest text-body border-b border-heading/15 pb-1.5 mb-3 mt-6 first:mt-0">
+    <div style={{
+      fontSize: "11pt",
+      fontWeight: "bold",
+      color: "#000",
+      marginTop: "10pt",
+      marginBottom: "5pt",
+    }}>
       {children}
-    </h4>
+    </div>
   );
 }
 
-/**
- * Shaerror result component used by both the live tailoring flow and
- * the saved tailored-version detail page.
- */
 export default function TailoredResult({
   matchScore,
   matchedSkills = [],
@@ -43,14 +64,25 @@ export default function TailoredResult({
   atsAnalysis,
   tailoredResume,
   jobDescriptionId,
-}: TailoredResultProps) {
+  versionId, // We might need this for deletion
+}: TailoredResultProps & { versionId?: string }) {
+  const router = useRouter();
+  const { removeVersion } = useDashboard();
+  
   const [isCopied, setIsCopied] = useState(false);
   const [isDownloadingDocx, setIsDownloadingDocx] = useState(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [downloadError, setDownloadError] = useState("");
+  
+  // Deletion logic
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Build a plain-text representation from the structuerror resume
   const plainText = tailoredResume ? buildPlainText(tailoredResume) : "";
+
+  const initialScore = atsAnalysis?.initialMatchScore ?? null;
+  const improvement = atsAnalysis?.scoreImprovement ?? (initialScore !== null && matchScore !== null ? matchScore - initialScore : null);
 
   const handleCopy = async () => {
     try {
@@ -80,20 +112,13 @@ export default function TailoredResult({
     if (!jobDescriptionId) return;
     setIsDownloadingDocx(true);
     setDownloadError("");
-
     try {
       const response = await apiFetch(`/api/jobs/${jobDescriptionId}/download`, { method: "POST" });
       const json = await response.json();
-
-      if (!json.success) {
-        throw new Error(json.message || "Failed to download");
-      }
-
+      if (!json.success) throw new Error(json.message || "Failed to download");
       const byteCharacters = atob(json.data);
       const byteArray = new Uint8Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteArray[i] = byteCharacters.charCodeAt(i);
-      }
+      for (let i = 0; i < byteCharacters.length; i++) byteArray[i] = byteCharacters.charCodeAt(i);
       const blob = new Blob([byteArray], { type: json.mimeType });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -114,20 +139,13 @@ export default function TailoredResult({
     if (!jobDescriptionId) return;
     setIsDownloadingPdf(true);
     setDownloadError("");
-
     try {
       const response = await apiFetch(`/api/jobs/${jobDescriptionId}/download-pdf`, { method: "POST" });
       const json = await response.json();
-
-      if (!json.success) {
-        throw new Error(json.message || "Failed to download");
-      }
-
+      if (!json.success) throw new Error(json.message || "Failed to download");
       const byteCharacters = atob(json.data);
       const byteArray = new Uint8Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteArray[i] = byteCharacters.charCodeAt(i);
-      }
+      for (let i = 0; i < byteCharacters.length; i++) byteArray[i] = byteCharacters.charCodeAt(i);
       const blob = new Blob([byteArray], { type: json.mimeType });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -144,45 +162,208 @@ export default function TailoredResult({
     }
   };
 
+  const handleDelete = async () => {
+    if (!versionId) return;
+    setIsDeleting(true);
+    setDownloadError("");
+
+    try {
+      const res = await apiFetch(`/api/jobs/versions/${versionId}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        removeVersion(versionId);
+        setShowDeleteModal(false);
+        router.push("/dashboard");
+      } else {
+        const json = await res.json();
+        setDownloadError(json.message || "Failed to delete version.");
+      }
+    } catch (err: any) {
+      setDownloadError(err.message || "Failed to delete version.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="w-full max-w-[900px] space-y-8 md:space-y-10 mx-auto">
-      {/* ── Fit Score Card ── */}
-      <div className="p-8 rounded-3xl bg-white/90 backdrop-blur-xl border border-heading/10 shadow-[0_4px_25px_rgba(0,0,0,0.03)]">
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <h3 className="font-fraunces text-xl font-bold text-heading">Fit Score Analysis</h3>
-            <p className="text-body text-xs mt-0.5">
-              Resume keyword & requirement coverage for target position
-            </p>
+
+      {/* ── Before vs After ATS Score Comparison ── */}
+      {initialScore !== null && matchScore !== null && (
+        <div className="p-8 rounded-3xl bg-white/90 backdrop-blur-xl border border-heading/10 shadow-[0_4px_25px_rgba(0,0,0,0.03)]">
+          <div className="flex items-center gap-2 mb-6">
+            <TrendingUp className="w-5 h-5 text-accent" />
+            <h3 className="font-fraunces text-xl font-bold text-heading">ATS Score Comparison</h3>
           </div>
-          {matchScore !== null && (
-            <span
-              className="text-3xl font-bold text-heading tracking-tight"
-              style={{ fontVariantNumeric: "tabular-nums" }}
-            >
-              {matchScore}%
-            </span>
+
+          {/* Score Cards Side-by-Side */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            {/* Before */}
+            <div className="flex flex-col items-center p-5 rounded-2xl bg-navy-50 border border-navy-100">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-navy-400 mb-2">Before</span>
+              <span className="text-4xl font-bold text-navy-900" style={{ fontVariantNumeric: "tabular-nums" }}>
+                {initialScore}%
+              </span>
+              <span className="text-[10px] text-navy-400 font-medium mt-1">Original Resume</span>
+            </div>
+
+            {/* Improvement */}
+            <div className="flex flex-col items-center justify-center p-5 rounded-2xl bg-accent/5 border border-accent/20">
+              <ArrowUp className="w-6 h-6 text-accent mb-1" />
+              <span className="text-3xl font-bold text-accent" style={{ fontVariantNumeric: "tabular-nums" }}>
+                +{improvement ?? 0}%
+              </span>
+              <span className="text-[10px] text-accent font-semibold mt-1">Improvement</span>
+            </div>
+
+            {/* After */}
+            <div className="flex flex-col items-center p-5 rounded-2xl bg-emerald-50 border border-emerald-200">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 mb-2">After</span>
+              <span className="text-4xl font-bold text-emerald-700" style={{ fontVariantNumeric: "tabular-nums" }}>
+                {matchScore}%
+              </span>
+              <span className="text-[10px] text-emerald-500 font-medium mt-1">Optimized Resume</span>
+            </div>
+          </div>
+
+          {/* Progress Bar Comparison */}
+          <div className="space-y-3">
+            <div>
+              <div className="flex items-center justify-between text-xs font-semibold text-navy-500 mb-1">
+                <span>Original</span>
+                <span>{initialScore}%</span>
+              </div>
+              <div className="w-full h-2.5 rounded-full bg-navy-100 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-navy-400 transition-all duration-700"
+                  style={{ width: `${initialScore}%` }}
+                />
+              </div>
+            </div>
+            <div>
+              <div className="flex items-center justify-between text-xs font-semibold text-emerald-600 mb-1">
+                <span>Optimized</span>
+                <span>{matchScore}%</span>
+              </div>
+              <div className="w-full h-2.5 rounded-full bg-emerald-100 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-emerald-500 transition-all duration-700"
+                  style={{ width: `${matchScore}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Newly Added Skills & Keywords ── */}
+      {atsAnalysis && ((atsAnalysis.addedSkills && atsAnalysis.addedSkills.length > 0) || (atsAnalysis.addedKeywords && atsAnalysis.addedKeywords.length > 0)) && (
+        <div className="p-8 rounded-3xl bg-white/90 backdrop-blur-xl border border-heading/10 shadow-[0_4px_25px_rgba(0,0,0,0.03)]">
+          <h3 className="font-fraunces text-xl font-bold text-heading mb-1 flex items-center gap-2">
+            <Zap className="w-5 h-5 text-accent" />
+            Skills & Keywords Integrated
+          </h3>
+          <p className="text-body text-xs mb-5">
+            These missing skills and keywords were naturally incorporated into your tailored resume.
+          </p>
+
+          {atsAnalysis.addedSkills && atsAnalysis.addedSkills.length > 0 && (
+            <div className="mb-4">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-accent mb-2.5 flex items-center gap-1.5">
+                <Plus className="w-3.5 h-3.5" />
+                Newly Added Skills
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {atsAnalysis.addedSkills.map((skill, idx) => (
+                  <span
+                    key={idx}
+                    className="px-3 py-1.5 rounded-xl bg-accent/10 text-accent text-xs font-semibold border border-accent/20"
+                  >
+                    + {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {atsAnalysis.addedKeywords && atsAnalysis.addedKeywords.length > 0 && (
+            <div className="mb-4">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-600 mb-2.5 flex items-center gap-1.5">
+                <Plus className="w-3.5 h-3.5" />
+                Newly Added Keywords
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {atsAnalysis.addedKeywords.map((kw, idx) => (
+                  <span
+                    key={idx}
+                    className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200"
+                  >
+                    + {kw}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {atsAnalysis.improvedSections && atsAnalysis.improvedSections.length > 0 && (
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-violet-500 mb-2.5 flex items-center gap-1.5">
+                <Target className="w-3.5 h-3.5" />
+                Improved Sections
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {atsAnalysis.improvedSections.map((section, idx) => (
+                  <span
+                    key={idx}
+                    className="px-3 py-1.5 rounded-xl bg-violet-50 text-violet-700 text-xs font-semibold border border-violet-200"
+                  >
+                    {section}
+                  </span>
+                ))}
+              </div>
+            </div>
           )}
         </div>
-        <div className="w-full h-3.5 rounded-full bg-heading/5 overflow-hidden p-0.5 border border-heading/5">
-          <div
-            className="h-full rounded-full transition-all duration-700 ease-out"
-            style={{
-              width: matchScore !== null ? `${matchScore}%` : "0%",
-              backgroundColor: matchScore && matchScore >= 75 ? "#10B981" : matchScore && matchScore >= 50 ? "#E8A33D" : "#EF4444",
-            }}
-          />
+      )}
+
+      {/* ── Fit Score Card (fallback if no initialScore) ── */}
+      {(initialScore === null) && (
+        <div className="p-8 rounded-3xl bg-white/90 backdrop-blur-xl border border-heading/10 shadow-[0_4px_25px_rgba(0,0,0,0.03)]">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h3 className="font-fraunces text-xl font-bold text-heading">Fit Score Analysis</h3>
+              <p className="text-body text-xs mt-0.5">
+                Resume keyword & requirement coverage for target position
+              </p>
+            </div>
+            {matchScore !== null && (
+              <span className="text-3xl font-bold text-heading tracking-tight" style={{ fontVariantNumeric: "tabular-nums" }}>
+                {matchScore}%
+              </span>
+            )}
+          </div>
+          <div className="w-full h-3.5 rounded-full bg-heading/5 overflow-hidden p-0.5 border border-heading/5">
+            <div
+              className="h-full rounded-full transition-all duration-700 ease-out"
+              style={{
+                width: matchScore !== null ? `${matchScore}%` : "0%",
+                backgroundColor: matchScore && matchScore >= 75 ? "#10B981" : matchScore && matchScore >= 50 ? "#E8A33D" : "#EF4444",
+              }}
+            />
+          </div>
+          <p className="text-body text-xs mt-3 font-semibold">
+            {matchScore === null
+              ? "Score unavailable"
+              : matchScore >= 80
+              ? "✦ Strong match — resume is highly aligned with job requirements."
+              : matchScore >= 50
+              ? "◎ Good match — essential keywords incorporated with minor gaps."
+              : "△ Needs significant tailoring — key missing qualifications noted below."}
+          </p>
         </div>
-        <p className="text-body text-xs mt-3 font-semibold">
-          {matchScore === null
-            ? "Score unavailable"
-            : matchScore >= 80
-            ? "✦ Strong match — resume is highly aligned with job requirements."
-            : matchScore >= 50
-            ? "◎ Good match — essential keywords incorporated with minor gaps."
-            : "△ Needs significant tailoring — key missing qualifications noted below."}
-        </p>
-      </div>
+      )}
 
       {/* ── Matched Skills Card ── */}
       {matchedSkills.length > 0 && (
@@ -198,7 +379,7 @@ export default function TailoredResult({
             {matchedSkills.map((skill) => (
               <span
                 key={skill}
-                className="px-3.5 py-1.5 rounded-xl bg-success-50 text-success-700 text-xs font-semibold border border-success-200 shadow-sm"
+                className="px-3.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200 shadow-sm"
               >
                 ✓ {skill}
               </span>
@@ -232,9 +413,7 @@ export default function TailoredResult({
                   {typeof item === 'string' ? item : item.skill}
                 </span>
                 {typeof item !== 'string' && item.reason && (
-                  <span className="text-xs text-body leading-relaxed">
-                    {item.reason}
-                  </span>
+                  <span className="text-xs text-body leading-relaxed">{item.reason}</span>
                 )}
               </div>
             ))}
@@ -254,7 +433,6 @@ export default function TailoredResult({
           </p>
 
           <div className="space-y-5">
-            {/* Strengths */}
             {atsAnalysis.strengths && atsAnalysis.strengths.length > 0 && (
               <div>
                 <h4 className="text-xs font-bold uppercase tracking-wider text-success mb-2.5 flex items-center gap-1.5">
@@ -272,7 +450,6 @@ export default function TailoredResult({
               </div>
             )}
 
-            {/* Gaps */}
             {atsAnalysis.gaps && atsAnalysis.gaps.length > 0 && (
               <div>
                 <h4 className="text-xs font-bold uppercase tracking-wider text-primary mb-2.5 flex items-center gap-1.5">
@@ -290,7 +467,6 @@ export default function TailoredResult({
               </div>
             )}
 
-            {/* Recommendations */}
             {atsAnalysis.recommendations && atsAnalysis.recommendations.length > 0 && (
               <div>
                 <h4 className="text-xs font-bold uppercase tracking-wider text-violet-500 mb-2.5 flex items-center gap-1.5">
@@ -317,15 +493,15 @@ export default function TailoredResult({
           <div>
             <h3 className="font-fraunces text-xl font-bold text-heading flex items-center gap-2">
               <FileText className="w-5 h-5 text-primary" />
-              Tailored Resume Draft
+              Tailored Resume Preview
             </h3>
             <p className="text-body text-xs mt-0.5">
-              ATS-optimized physical page preview
+              WYSIWYG preview — matches the exported PDF layout exactly
             </p>
           </div>
 
           {plainText && (
-            <div className="flex items-center gap-2 self-start sm:self-auto relative">
+            <div className="flex items-center gap-2 self-start sm:self-auto relative flex-wrap">
               <button
                 onClick={handleCopy}
                 className="px-3.5 py-2 rounded-xl border border-heading/15 bg-white text-heading hover:bg-heading hover:text-white transition-all flex items-center gap-1.5 text-xs font-bold shadow-sm"
@@ -372,6 +548,41 @@ export default function TailoredResult({
                   </button>
                 </>
               )}
+
+              {/* Delete Menu */}
+              {versionId && (
+                <div className="relative">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsMenuOpen(!isMenuOpen);
+                    }}
+                    className="p-2 rounded-xl border border-heading/15 bg-white text-heading hover:bg-heading/5 transition-all text-xs font-bold shadow-sm"
+                    title="More Options"
+                  >
+                    <MoreVertical className="w-4 h-4" />
+                  </button>
+
+                  {isMenuOpen && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setIsMenuOpen(false)} />
+                      <div className="absolute right-0 top-12 w-48 bg-white border border-navy-100 rounded-xl shadow-xl z-20 py-1 overflow-hidden animate-fadeIn">
+                        <button
+                          onClick={() => {
+                            setIsMenuOpen(false);
+                            setShowDeleteModal(true);
+                          }}
+                          className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors text-left"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete Tailored Version
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
               {downloadError && (
                 <span className="absolute -bottom-8 right-0 text-error text-[10px] whitespace-nowrap bg-white px-2 py-1 rounded shadow-sm border border-error/20 z-10">
                   {downloadError}
@@ -381,11 +592,22 @@ export default function TailoredResult({
           )}
         </div>
 
-        {/* ── Document "Paper" Sheet Card ── */}
+        {/* ── WYSIWYG Document Paper Sheet ── */}
         {tailoredResume ? (
-          <div className="bg-white border border-heading/15 rounded-[6px] shadow-[0_12px_40px_rgba(0,0,0,0.08)] p-8 sm:p-12 md:p-14 max-w-[680px] mx-auto text-heading font-sans leading-relaxed">
-            <div className="max-h-[650px] overflow-y-auto pr-3 scrollbar-thin scrollbar-thumb-heading/20">
-              {renderStructuerrorResume(tailoredResume)}
+          <div className="bg-heading/5 rounded-2xl p-4 overflow-x-auto">
+            <div
+              className="bg-white border text-left border-[#d0d0d0] shadow-[0_12px_40px_rgba(0,0,0,0.08)] mx-auto overflow-hidden shrink-0"
+              style={{
+                width: "612pt",
+                minHeight: "792pt",
+                padding: "36pt",
+                boxSizing: "border-box",
+                fontFamily: "Helvetica, Arial, sans-serif",
+                color: "#000",
+                lineHeight: "1.2"
+              }}
+            >
+              {renderWysiwygResume(tailoredResume)}
             </div>
           </div>
         ) : (
@@ -394,95 +616,136 @@ export default function TailoredResult({
           </div>
         )}
       </div>
+
+      {/* Confirmation Modal for Version Deletion */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-navy-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-navy-100 relative">
+            <button
+              onClick={() => setShowDeleteModal(false)}
+              className="absolute top-4 right-4 text-navy-400 hover:text-navy-700 p-1 rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="w-12 h-12 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center text-red-600 mb-4">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+
+            <h3 className="text-lg font-bold text-navy-900 mb-2 font-fraunces">Delete Tailored Version?</h3>
+            <p className="text-navy-500 text-sm mb-6 leading-relaxed">
+              Are you sure you want to delete this tailored version? This action cannot be undone.
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2.5 rounded-xl border border-navy-200 text-navy-700 text-sm font-semibold hover:bg-navy-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition-colors flex items-center gap-2 shadow-sm"
+              >
+                {isDeleting ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  "Delete Version"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-/* ─── Helpers ─── */
+/* ═══════════════════════════════════════════════
+   WYSIWYG Resume Renderer - mirrors pdf.service.ts layout
+   ═══════════════════════════════════════════════ */
 
-/** Pretty-render structuerror resume object into a professional paper document layout */
-function renderStructuerrorResume(r: any): React.ReactNode {
+function renderWysiwygResume(r: any): React.ReactNode {
   if (!r || typeof r !== "object") {
-    return <p className="whitespace-pre-wrap font-sans text-sm">{String(r ?? "")}</p>;
+    return <p style={{ whiteSpace: "pre-wrap", fontFamily: "Helvetica, Arial, sans-serif", fontSize: "9.5px" }}>{String(r ?? "")}</p>;
   }
 
   const sections: React.ReactNode[] = [];
 
-  // Header & Contact Info
   const fullName = r.fullName || r.name;
   const title = r.title || r.professionalTitle;
   const contact = r.contactLine;
 
+  /* ── Header: Centered Name, Title, Contact with separators ── */
   if (fullName || title || contact) {
-    const contactItems: string[] = [];
-    if (contact?.email) contactItems.push(contact.email);
-    if (contact?.phone) contactItems.push(contact.phone);
-    if (contact?.location) contactItems.push(contact.location);
-    if (Array.isArray(contact?.links)) {
-      for (const link of contact.links) {
-        if (link.label) contactItems.push(link.url ? `${link.label}: ${link.url}` : link.label);
+    const contactParts: { text: string; url?: string }[] = [];
+    if (typeof contact === "string") {
+      contactParts.push({ text: contact });
+    } else if (contact) {
+      if (contact.email) contactParts.push({ text: contact.email, url: `mailto:${contact.email}` });
+      if (contact.phone) contactParts.push({ text: contact.phone });
+      if (contact.location) contactParts.push({ text: contact.location });
+      if (Array.isArray(contact.links)) {
+        for (const link of contact.links) {
+          if (link.label) contactParts.push({ text: link.label, url: link.url });
+        }
       }
     }
 
     sections.push(
-      <div key="header" className="text-center sm:text-left mb-6">
+      <div key="header" style={{ textAlign: "center", marginBottom: "5pt" }}>
         {fullName && (
-          <h1 className="font-fraunces text-2xl sm:text-[26px] font-bold text-heading tracking-tight leading-tight mb-1">
+          <div style={{ fontSize: "22pt", fontWeight: "bold", color: "#000", marginBottom: "2pt" }}>
             {fullName}
-          </h1>
+          </div>
         )}
         {title && (
-          <p className="text-sm font-semibold text-body mb-2">
+          <div style={{ fontSize: "11pt", color: "#555", marginBottom: "5pt" }}>
             {title}
-          </p>
+          </div>
         )}
-        {contactItems.length > 0 && (
-          <p className="text-xs text-body flex flex-wrap items-center justify-center sm:justify-start gap-x-2.5 gap-y-1 mt-1.5 font-medium">
-            {contactItems.map((item, idx) => (
+        {contactParts.length > 0 && (
+          <div style={{ fontSize: "9pt", color: "#000", display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "6pt", marginBottom: "10pt" }}>
+            {contactParts.map((part, idx) => (
               <React.Fragment key={idx}>
-                {idx > 0 && <span className="text-body">•</span>}
-                <span>{item}</span>
+                {idx > 0 && <span style={{ color: "#000" }}>  |  </span>}
+                {part.url ? (
+                  <a href={part.url} style={{ color: "#0563C1", textDecoration: "none" }}>{part.text}</a>
+                ) : (
+                  <span>{part.text}</span>
+                )}
               </React.Fragment>
             ))}
-          </p>
+          </div>
         )}
-        {/* Thin horizontal divider matching docx layout */}
-        <div className="border-b border-heading/15 mt-4" />
+        {/* Horizontal divider matching PDF */}
+        <div style={{ borderBottom: "1px solid #000", marginBottom: "10pt" }} />
       </div>
     );
   }
 
-  // Summary
+  /* ── Summary ── */
   if (r.summary) {
     sections.push(
-      <div key="summary">
-        <SectionHeading>Professional Summary</SectionHeading>
-        <p className="text-xs sm:text-sm text-body leading-relaxed">{r.summary}</p>
+      <div key="summary" style={{ marginBottom: "10pt" }}>
+        <SectionHeading>PROFESSIONAL SUMMARY</SectionHeading>
+        <p style={{ fontSize: "9.5pt", color: "#000", margin: 0, textAlign: "justify" }}>{r.summary}</p>
       </div>
     );
   }
 
-  // Skills
+  /* ── Skills (inline format: Category: Skill1, Skill2, Skill3) ── */
   if (r.skillCategories && Array.isArray(r.skillCategories) && r.skillCategories.length > 0) {
     sections.push(
-      <div key="skills">
-        <SectionHeading>Skills & Core Competencies</SectionHeading>
-        <div className="space-y-4">
+      <div key="skills" style={{ marginBottom: "8pt" }}>
+        <SectionHeading>SKILLS & CORE COMPETENCIES</SectionHeading>
+        <div style={{ display: "flex", flexDirection: "column", gap: "2pt" }}>
           {r.skillCategories.map((cat: any, i: number) => (
-            <div key={i}>
-              <div className="text-[10px] font-bold uppercase tracking-wider text-body/70 mb-1.5">
-                {cat.category}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {cat.skills?.map((s: string, idx: number) => (
-                  <span
-                    key={idx}
-                    className="px-2.5 py-1 text-xs font-semibold bg-heading/5 text-body rounded-md border border-heading/10"
-                  >
-                    {s}
-                  </span>
-                ))}
-              </div>
+            <div key={i} style={{ fontSize: "9.5pt", color: "#000" }}>
+              <span style={{ fontWeight: "bold" }}>{cat.category}: </span>
+              <span>{cat.skills?.join(", ")}</span>
             </div>
           ))}
         </div>
@@ -490,42 +753,38 @@ function renderStructuerrorResume(r: any): React.ReactNode {
     );
   }
 
-  // Experience
+  /* ── Experience ── */
   if (r.experience && Array.isArray(r.experience) && r.experience.length > 0) {
     sections.push(
-      <div key="experience">
-        <SectionHeading>Professional Experience</SectionHeading>
-        <div className="space-y-5">
+      <div key="experience" style={{ marginBottom: "10pt" }}>
+        <SectionHeading>PROFESSIONAL EXPERIENCE</SectionHeading>
+        <div style={{ display: "flex", flexDirection: "column", gap: "10pt" }}>
           {r.experience.map((exp: any, i: number) => (
             <div key={i}>
-              <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-1.5">
-                <div>
-                  <span className="font-bold text-sm text-heading">
-                    {exp.role || exp.jobTitle || exp.title}
-                  </span>
-                  {exp.company && (
-                    <span className="text-body font-medium text-xs sm:text-sm">
-                      {" "}— {exp.company}
-                    </span>
-                  )}
-                </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                <span style={{ fontSize: "9.5pt", fontWeight: "bold", color: "#000" }}>
+                  {exp.role || exp.jobTitle || exp.title} - {exp.company}
+                </span>
                 {exp.dates && (
-                  <span className="text-xs font-semibold text-body whitespace-nowrap">
+                  <span style={{ fontSize: "9.5pt", fontWeight: "bold", color: "#000" }}>
                     {exp.dates}
                   </span>
                 )}
               </div>
               {exp.location && (
-                <p className="text-[11px] text-body font-medium mb-1">{exp.location}</p>
+                <div style={{ fontSize: "9.5pt", fontStyle: "italic", color: "#000", marginTop: "2pt" }}>
+                  {exp.location}
+                </div>
               )}
               {exp.bullets && Array.isArray(exp.bullets) && exp.bullets.length > 0 && (
-                <ul className="list-disc pl-5 space-y-1.5 mt-2">
+                <div style={{ marginTop: "2pt", display: "flex", flexDirection: "column", gap: "2pt" }}>
                   {exp.bullets.map((b: string, j: number) => (
-                    <li key={j} className="text-xs sm:text-sm text-body leading-relaxed">
-                      {b}
-                    </li>
+                    <div key={j} style={{ fontSize: "9.5pt", color: "#000", display: "flex" }}>
+                      <span style={{ width: "15pt", flexShrink: 0, paddingLeft: "10pt" }}>•</span>
+                      <span style={{ flex: 1, textAlign: "justify" }}>{b}</span>
+                    </div>
                   ))}
-                </ul>
+                </div>
               )}
             </div>
           ))}
@@ -534,26 +793,19 @@ function renderStructuerrorResume(r: any): React.ReactNode {
     );
   }
 
-  // Education
+  /* ── Education ── */
   if (r.education && Array.isArray(r.education) && r.education.length > 0) {
     sections.push(
-      <div key="education">
-        <SectionHeading>Education</SectionHeading>
-        <div className="space-y-3">
+      <div key="education" style={{ marginBottom: "4pt" }}>
+        <SectionHeading>EDUCATION</SectionHeading>
+        <div style={{ display: "flex", flexDirection: "column", gap: "6pt" }}>
           {r.education.map((edu: any, i: number) => (
-            <div key={i} className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
-              <div>
-                <span className="font-bold text-sm text-heading">
-                  {edu.degree || edu.title}
-                </span>
-                {edu.school && (
-                  <span className="text-body font-medium text-xs sm:text-sm">
-                    {" "}— {edu.school}
-                  </span>
-                )}
-              </div>
+            <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+              <span style={{ fontSize: "9.5pt", fontWeight: "bold", color: "#000" }}>
+                {edu.degree || edu.title} - {edu.school}
+              </span>
               {edu.dates && (
-                <span className="text-xs font-semibold text-body whitespace-nowrap">
+                <span style={{ fontSize: "9.5pt", fontWeight: "bold", color: "#000" }}>
                   {edu.dates}
                 </span>
               )}
@@ -564,26 +816,26 @@ function renderStructuerrorResume(r: any): React.ReactNode {
     );
   }
 
-  // Projects
+  /* ── Projects ── */
   if (r.projects && Array.isArray(r.projects) && r.projects.length > 0) {
     sections.push(
-      <div key="projects">
-        <SectionHeading>Projects</SectionHeading>
-        <div className="space-y-4">
+      <div key="projects" style={{ marginBottom: "8pt" }}>
+        <SectionHeading>PROJECTS</SectionHeading>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8pt" }}>
           {r.projects.map((proj: any, i: number) => (
             <div key={i}>
-              <p className="font-bold text-sm text-heading">{proj.name || proj.title}</p>
-              {proj.description && (
-                <p className="text-xs text-body mt-0.5">{proj.description}</p>
-              )}
+              <div style={{ fontSize: "9.5pt", fontWeight: "bold", color: "#000", marginBottom: "3pt" }}>
+                {proj.name || proj.title}
+              </div>
               {proj.bullets && Array.isArray(proj.bullets) && proj.bullets.length > 0 && (
-                <ul className="list-disc pl-5 space-y-1.5 mt-1.5">
+                <div style={{ display: "flex", flexDirection: "column", gap: "2pt" }}>
                   {proj.bullets.map((b: string, j: number) => (
-                    <li key={j} className="text-xs sm:text-sm text-body leading-relaxed">
-                      {b}
-                    </li>
+                    <div key={j} style={{ fontSize: "9.5pt", color: "#000", display: "flex" }}>
+                      <span style={{ width: "15pt", flexShrink: 0, paddingLeft: "10pt" }}>•</span>
+                      <span style={{ flex: 1, textAlign: "justify" }}>{b}</span>
+                    </div>
                   ))}
-                </ul>
+                </div>
               )}
             </div>
           ))}
@@ -592,30 +844,34 @@ function renderStructuerrorResume(r: any): React.ReactNode {
     );
   }
 
-  // Certifications
+  /* ── Certifications ── */
   if (r.certifications && Array.isArray(r.certifications) && r.certifications.length > 0) {
     sections.push(
-      <div key="certs">
-        <SectionHeading>Certifications</SectionHeading>
-        <ul className="list-disc pl-5 space-y-1">
+      <div key="certs" style={{ marginBottom: "8pt" }}>
+        <SectionHeading>CERTIFICATIONS</SectionHeading>
+        <div style={{ display: "flex", flexDirection: "column", gap: "2pt" }}>
           {r.certifications.map((c: string, i: number) => (
-            <li key={i} className="text-xs sm:text-sm text-body font-medium">
-              {c}
-            </li>
+            <div key={i} style={{ fontSize: "9.5pt", color: "#000", display: "flex" }}>
+              <span style={{ width: "15pt", flexShrink: 0, paddingLeft: "10pt" }}>•</span>
+              <span style={{ flex: 1, textAlign: "justify" }}>{c}</span>
+            </div>
           ))}
-        </ul>
+        </div>
       </div>
     );
   }
 
   if (sections.length === 0) {
-    return <p className="whitespace-pre-wrap font-sans text-sm">{JSON.stringify(r, null, 2)}</p>;
+    return <p style={{ whiteSpace: "pre-wrap", fontFamily: "Helvetica, Arial, sans-serif", fontSize: "9.5px" }}>{JSON.stringify(r, null, 2)}</p>;
   }
 
-  return <div className="space-y-3">{sections}</div>;
+  return <div>{sections}</div>;
 }
 
-/** Build a plain-text representation from the structuerror resume for copy/download */
+/* ═══════════════════════════════════════════════
+   Plain-text builder (for copy / .txt download)
+   ═══════════════════════════════════════════════ */
+
 function buildPlainText(r: any): string {
   if (!r || typeof r !== "object") return String(r ?? "");
 
@@ -629,9 +885,13 @@ function buildPlainText(r: any): string {
 
   if (r.contactLine) {
     const contactParts: string[] = [];
-    if (r.contactLine.email) contactParts.push(r.contactLine.email);
-    if (r.contactLine.phone) contactParts.push(r.contactLine.phone);
-    if (r.contactLine.location) contactParts.push(r.contactLine.location);
+    if (typeof r.contactLine === "string") {
+      contactParts.push(r.contactLine);
+    } else {
+      if (r.contactLine.email) contactParts.push(r.contactLine.email);
+      if (r.contactLine.phone) contactParts.push(r.contactLine.phone);
+      if (r.contactLine.location) contactParts.push(r.contactLine.location);
+    }
     if (contactParts.length) lines.push(contactParts.join(" | "));
   }
 
@@ -645,7 +905,7 @@ function buildPlainText(r: any): string {
     lines.push("SKILLS & CORE COMPETENCIES");
     for (const cat of r.skillCategories) {
       if (cat.category && cat.skills) {
-        lines.push(`${cat.category}: ${cat.skills.join(', ')}`);
+        lines.push(`${cat.category}: ${cat.skills.join(", ")}`);
       }
     }
     lines.push("");

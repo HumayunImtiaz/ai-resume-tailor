@@ -11,7 +11,18 @@ interface TailoredVersionDetail {
   matchScore: number;
   matchedSkills?: string[];
   missingSkills?: { skill: string; reason: string }[];
-  atsAnalysis?: { strengths?: string[]; gaps?: string[]; recommendations?: string[] } | null;
+  atsAnalysis?: {
+    initialMatchScore?: number;
+    initialMissingSkills?: string[];
+    initialMissingKeywords?: string[];
+    scoreImprovement?: number;
+    addedSkills?: string[];
+    addedKeywords?: string[];
+    improvedSections?: string[];
+    strengths?: string[];
+    gaps?: string[];
+    recommendations?: string[];
+  } | null;
   tailoredResume: any;
   createdAt: string;
   jobDescription: {
