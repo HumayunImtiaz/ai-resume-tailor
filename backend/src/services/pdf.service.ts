@@ -14,7 +14,8 @@ function sanitizeForPdf(text: string): string {
     .replace(/”/g, '"')
     .replace(/…/g, '...')
     // Strip any remaining characters outside the basic WinAnsi-safe range
-    .replace(/[^\x00-\xFF]/g, '');
+    // eslint-disable-next-line no-control-regex
+    .replace(/[^\u0000-\u00FF]/g, '');
 }
 
 export interface StructuredResume {

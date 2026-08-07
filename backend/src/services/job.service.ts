@@ -116,7 +116,7 @@ export const jobService = {
           let tailoredResume = undefined;
           try {
             tailoredResume = JSON.parse(tailoredVersion.tailoredText);
-          } catch (e) {
+          } catch (_e) {
             // Ignored, fallback to undefined
           }
 
@@ -172,7 +172,7 @@ export const jobService = {
         if (!parsedResume || !parsedResume.fullName) {
           return { success: false as const, error: 'Tailored resume not ready yet' };
         }
-      } catch (e) {
+      } catch (_e) {
         return { success: false as const, error: 'Tailored resume format is invalid' };
       }
 
@@ -213,7 +213,7 @@ export const jobService = {
         if (!parsedResume || !parsedResume.fullName) {
           return { success: false as const, error: 'Tailored resume not ready yet' };
         }
-      } catch (e) {
+      } catch (_e) {
         return { success: false as const, error: 'Tailored resume format is invalid' };
       }
 
@@ -256,7 +256,7 @@ export const jobService = {
       let tailoredResume;
       try {
         tailoredResume = JSON.parse(tailoredVersion.tailoredText);
-      } catch (e) {
+      } catch (_e) {
         // Ignored, fallback to undefined
       }
 

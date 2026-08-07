@@ -45,6 +45,7 @@ export const resumeService = {
       }
 
       // Sanitize extracted text by stripping null bytes
+      // eslint-disable-next-line no-control-regex
       rawText = rawText.replace(/\u0000/g, '');
 
       return { success: true as const, text: rawText, links };
