@@ -17,6 +17,7 @@ export const env = {
   jwtSecret: getRequiredEnv('JWT_SECRET'),
   jwtExpiresIn: '7d', // Fixed value as requested
   redis: {
+    url: process.env.REDIS_URL,
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379', 10),
   },

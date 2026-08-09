@@ -652,9 +652,6 @@ export default function TailoredResult({
   );
 }
 
-/* ═══════════════════════════════════════════════
-   WYSIWYG Resume Renderer - mirrors pdf.service.ts layout
-   ═══════════════════════════════════════════════ */
 
 function renderWysiwygResume(r: any): React.ReactNode {
   if (!r || typeof r !== "object") {
