@@ -1,0 +1,15 @@
+[
+  "groq/compound",
+  "meta-llama/llama-prompt-guard-2-86m",
+  "canopylabs/orpheus-v1-english",
+  "openai/gpt-oss-120b",
+  "whisper-large-v3-turbo",
+  "groq/compound-mini",
+  "canopylabs/orpheus-arabic-saudi",
+  "meta-llama/llama-prompt-guard-2-22m",
+  "allam-2-7b",
+  "openai/gpt-oss-20b",
+  "whisper-large-v3",
+  "openai/gpt-oss-safeguard-20b",
+  "qwen/qwen3.6-27b"
+]

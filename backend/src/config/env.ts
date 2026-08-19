@@ -22,6 +22,7 @@ export const env = {
     port: parseInt(process.env.REDIS_PORT || '6379', 10),
   },
   groqApiKey: getRequiredEnv('GROQ_API_KEY'),
+  groqModel: process.env.GROQ_MODEL || 'openai/gpt-oss-120b',
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
   cloudinaryCloudName: getRequiredEnv('CLOUDINARY_CLOUD_NAME'),
   cloudinaryApiKey: getRequiredEnv('CLOUDINARY_API_KEY'),
