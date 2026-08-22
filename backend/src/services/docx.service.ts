@@ -29,6 +29,7 @@ export interface StructuredResume {
   }[];
   projects?: {
     name: string;
+    url?: string;
     bullets: string[];
   }[];
   certifications?: string[];
@@ -122,13 +123,14 @@ export async function generateResumeDocx(resume: StructuredResume): Promise<Docx
         }
         if (cl.links && cl.links.length > 0) {
           for (const link of cl.links) {
+            const label = link.label || link.url || "Link";
             pushSeparator();
             if (link.url) {
               contactChildren.push(
                 new ExternalHyperlink({
                   children: [
                     new TextRun({
-                      text: link.label,
+                      text: label,
                       font: "Calibri",
                       size: 18,
                       color: "0563C1",
@@ -139,7 +141,7 @@ export async function generateResumeDocx(resume: StructuredResume): Promise<Docx
                 })
               );
             } else {
-              contactChildren.push(new TextRun({ text: link.label, font: "Calibri", size: 18 }));
+              contactChildren.push(new TextRun({ text: label, font: "Calibri", size: 18 }));
             }
           }
         }
@@ -333,16 +335,36 @@ export async function generateResumeDocx(resume: StructuredResume): Promise<Docx
     if (resume.projects && resume.projects.length > 0) {
       addSectionHeading("PROJECTS");
       for (const proj of resume.projects) {
+        const projHeaderChildren: any[] = [
+          new TextRun({
+            text: proj.name,
+            font: "Calibri",
+            size: 19,
+            bold: true,
+          }),
+        ];
+        
+        if (proj.url) {
+          projHeaderChildren.push(new TextRun({ text: " - ", font: "Calibri", size: 19, bold: true }));
+          projHeaderChildren.push(
+            new ExternalHyperlink({
+              children: [
+                new TextRun({
+                  text: proj.url,
+                  font: "Calibri",
+                  size: 19,
+                  color: "0563C1",
+                  underline: { type: UnderlineType.SINGLE, color: "0563C1" },
+                }),
+              ],
+              link: proj.url,
+            })
+          );
+        }
+
         children.push(
           new Paragraph({
-            children: [
-              new TextRun({
-                text: proj.name,
-                font: "Calibri",
-                size: 19,
-                bold: true,
-              }),
-            ],
+            children: projHeaderChildren,
             spacing: { before: 60, after: 20 },
           })
         );

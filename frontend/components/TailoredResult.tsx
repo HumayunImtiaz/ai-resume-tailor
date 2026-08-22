@@ -675,7 +675,8 @@ function renderWysiwygResume(r: any): React.ReactNode {
       if (contact.location) contactParts.push({ text: contact.location });
       if (Array.isArray(contact.links)) {
         for (const link of contact.links) {
-          if (link.label) contactParts.push({ text: link.label, url: link.url });
+          const label = link.label || link.url;
+          if (label) contactParts.push({ text: label, url: link.url });
         }
       }
     }
@@ -811,7 +812,11 @@ function renderWysiwygResume(r: any): React.ReactNode {
           {r.projects.map((proj: any, i: number) => (
             <div key={i}>
               <div style={{ fontSize: pt(9.5), fontWeight: "bold", color: "#000", marginBottom: pt(3) }}>
-                {proj.name || proj.title}
+                {proj.url ? (
+                  <a href={proj.url} style={{ color: "#0563C1", textDecoration: "none" }}>{proj.name || proj.title}</a>
+                ) : (
+                  proj.name || proj.title
+                )}
               </div>
               {proj.bullets && Array.isArray(proj.bullets) && proj.bullets.length > 0 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: pt(2) }}>
@@ -877,6 +882,12 @@ function buildPlainText(r: any): string {
       if (r.contactLine.email) contactParts.push(r.contactLine.email);
       if (r.contactLine.phone) contactParts.push(r.contactLine.phone);
       if (r.contactLine.location) contactParts.push(r.contactLine.location);
+      if (Array.isArray(r.contactLine.links)) {
+        for (const link of r.contactLine.links) {
+          const label = link.label || link.url;
+          if (label) contactParts.push(`${label}${link.url && link.url !== label ? ` (${link.url})` : ''}`);
+        }
+      }
     }
     if (contactParts.length) lines.push(contactParts.join(" | "));
   }
@@ -923,7 +934,9 @@ function buildPlainText(r: any): string {
   if (r.projects?.length) {
     lines.push("PROJECTS");
     for (const proj of r.projects) {
-      if (proj.name || proj.title) lines.push(proj.name || proj.title);
+      if (proj.name || proj.title) {
+        lines.push(proj.url ? `${proj.name || proj.title} - ${proj.url}` : (proj.name || proj.title));
+      }
       if (proj.description) lines.push(proj.description);
       if (proj.bullets?.length) {
         for (const b of proj.bullets) lines.push(`• ${b}`);

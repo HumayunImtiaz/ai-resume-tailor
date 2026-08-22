@@ -46,6 +46,7 @@ export interface StructuredResume {
   }[];
   projects?: {
     name: string;
+    url?: string;
     bullets: string[];
   }[];
   certifications?: string[];
@@ -191,7 +192,8 @@ export async function generateResumePdf(resume: StructuredResume): Promise<PdfGe
         if (cl.location) addPart('text', cl.location);
         if (cl.links) {
           cl.links.forEach((l) => {
-            addPart(l.url ? 'link' : 'text', l.label, l.url);
+            const label = l.label || l.url || "Link";
+            addPart(l.url ? 'link' : 'text', label, l.url);
           });
         }
 
@@ -363,7 +365,34 @@ export async function generateResumePdf(resume: StructuredResume): Promise<PdfGe
       drawSectionHeading('PROJECTS');
       for (const proj of resume.projects) {
         checkNewPage(12);
-        drawSanitizedText(page, proj.name, { x: margin, y: currentY - 9.5, size: 9.5, font: helveticaBold });
+        const nameWidth = getSanitizedWidth(helveticaBold, proj.name, 9.5);
+        drawSanitizedText(page, proj.name, { x: margin, y: currentY - 9.5, size: 9.5, font: helveticaBold, color: black });
+        
+        if (proj.url) {
+          const sep = " - ";
+          const sepWidth = getSanitizedWidth(helveticaFont, sep, 9.5);
+          drawSanitizedText(page, sep, { x: margin + nameWidth, y: currentY - 9.5, size: 9.5, font: helveticaFont, color: black });
+          
+          const urlWidth = getSanitizedWidth(helveticaFont, proj.url, 9.5);
+          drawSanitizedText(page, proj.url, { x: margin + nameWidth + sepWidth, y: currentY - 9.5, size: 9.5, font: helveticaFont, color: linkColor });
+          
+          const urlX = margin + nameWidth + sepWidth;
+          const rect = [urlX, currentY - 11.5, urlX + urlWidth, currentY];
+          const ref = pdfDoc.context.obj({
+            Type: 'Annot',
+            Subtype: 'Link',
+            Rect: rect,
+            Border: [0, 0, 0],
+            A: { Type: 'Action', S: 'URI', URI: proj.url },
+          });
+          let annots = page.node.Annots();
+          if (!annots) {
+            annots = pdfDoc.context.obj([]);
+            page.node.set(pdfDoc.context.obj('Annots'), annots);
+          }
+          annots.push(ref);
+        }
+        
         currentY -= 9.5 * 1.2 + 3;
 
         if (proj.bullets && proj.bullets.length > 0) {

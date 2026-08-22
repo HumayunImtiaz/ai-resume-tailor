@@ -149,7 +149,7 @@ You MUST respond with exactly a valid JSON object matching this structure:
       { "degree": "<string>", "school": "<string>", "dates": "<string>" }
     ],
     "projects": [
-      { "name": "<string>", "bullets": [<array of strings>] }
+      { "name": "<string>", "url": "<string, exact URL if present, optional>", "bullets": [<array of strings>] }
     ],
     "certifications": [<array of strings>]
   }
