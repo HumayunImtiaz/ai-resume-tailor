@@ -48,6 +48,23 @@ export const resumeService = {
       // eslint-disable-next-line no-control-regex
       rawText = rawText.replace(/\u0000/g, '');
 
+      // Fallback: extract any visible URLs from the raw text for both formats
+      const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9.-]+\.(com|org|net|io|me|dev)\/[a-zA-Z0-9.\-_\/]+)/gi;
+      let match;
+      while ((match = urlRegex.exec(rawText)) !== null) {
+        let url = match[1];
+        if (url.endsWith(',') || url.endsWith('!') || url.endsWith('.') || url.endsWith(')')) {
+          url = url.slice(0, -1);
+        }
+        if (!url.toLowerCase().startsWith('http')) {
+          url = 'https://' + url;
+        }
+        // Avoid duplicates
+        if (!links.some(l => l.url.toLowerCase() === url.toLowerCase())) {
+          links.push({ text: 'Link', url });
+        }
+      }
+
       return { success: true as const, text: rawText, links };
     } catch (error) {
       logger.error('Extract text error', { error });
