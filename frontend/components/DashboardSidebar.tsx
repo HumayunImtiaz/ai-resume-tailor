@@ -175,7 +175,7 @@ export default function DashboardSidebar({ onClose }: { onClose?: () => void }) 
           {/* Mini Logout */}
           <button
             onClick={handleLogout}
-            className="w-10 h-10 rounded-xl hover:bg-white/10 text-white/60 hover:text-white flex items-center justify-center transition-colors"
+            className="w-10 h-10 rounded-xl hover:bg-red-500/20 text-red-400 hover:text-red-300 flex items-center justify-center transition-colors"
             title="Log out"
           >
             <LogOut className="w-4 h-4" />
@@ -427,7 +427,7 @@ export default function DashboardSidebar({ onClose }: { onClose?: () => void }) 
           {/* Log Out Bottom Action */}
           <button
             onClick={handleLogout}
-            className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-white/60 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center gap-2 group border border-transparent hover:border-white/10"
+            className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all flex items-center justify-center gap-2 group border border-transparent hover:border-red-500/20"
           >
             <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
             Log out
