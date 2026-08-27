@@ -50,6 +50,13 @@ export default function DashboardSidebar({ onClose }: { onClose?: () => void }) 
   const [versionToDelete, setVersionToDelete] = useState<TailoredVersion | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const onLogoutClick = async () => {
+    setIsLoggingOut(true);
+    await handleLogout();
+    setIsLoggingOut(false);
+  };
 
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -174,11 +181,16 @@ export default function DashboardSidebar({ onClose }: { onClose?: () => void }) 
 
           {/* Mini Logout */}
           <button
-            onClick={handleLogout}
-            className="w-10 h-10 rounded-xl hover:bg-red-500/20 text-red-400 hover:text-red-300 flex items-center justify-center transition-colors"
+            onClick={onLogoutClick}
+            disabled={isLoggingOut}
+            className="w-10 h-10 rounded-xl hover:bg-red-500/20 text-red-400 hover:text-red-300 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="Log out"
           >
-            <LogOut className="w-4 h-4" />
+            {isLoggingOut ? (
+              <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <LogOut className="w-4 h-4" />
+            )}
           </button>
         </div>
       </aside>
@@ -426,11 +438,16 @@ export default function DashboardSidebar({ onClose }: { onClose?: () => void }) 
 
           {/* Log Out Bottom Action */}
           <button
-            onClick={handleLogout}
-            className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all flex items-center justify-center gap-2 group border border-transparent hover:border-red-500/20"
+            onClick={onLogoutClick}
+            disabled={isLoggingOut}
+            className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all flex items-center justify-center gap-2 group border border-transparent hover:border-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
-            Log out
+            {isLoggingOut ? (
+              <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+            )}
+            {isLoggingOut ? "Logging out..." : "Log out"}
           </button>
         </div>
       </aside>
