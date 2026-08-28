@@ -35,7 +35,7 @@ export const coverLetterController = {
       return;
     }
 
-    sendResponse(res, 200, 'success', result.data, 'Cover letters retrieved successfully');
+    sendResponse(res, 200, 'success', result.data, 'Your Cover letters retrieved successfully');
   }) as RequestHandler,
 
   deleteCoverLetter: (async (req: Request, res: Response) => {
