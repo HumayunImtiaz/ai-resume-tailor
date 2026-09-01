@@ -9,7 +9,7 @@
   <img src="https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
 </p>
 
-<h1 align="center">🎯 AI Resume Tailor</h1>
+<h1 align="center">🎯 ShortlistAI</h1>
 
 <p align="center">
   <strong>An intelligent, full-stack SaaS application that uses AI to tailor your resume for any job description — maximizing your ATS (Applicant Tracking System) match score and helping you land more interviews.</strong>

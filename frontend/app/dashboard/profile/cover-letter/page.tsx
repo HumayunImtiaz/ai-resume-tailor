@@ -56,23 +56,23 @@ export default function ProfileCoverLetterPage() {
               </div>
             </div>
 
-            {/* Document Preview — works for both PDF and DOCX */}
+            {/* Document Preview */}
             <div className="w-full rounded-2xl border border-blue-100 bg-white shadow-sm overflow-auto" style={{ minHeight: '400px' }}>
-              {previewLoading ? (
+              {activeCoverLetter.fileUrl && activeCoverLetter.originalFilename.toLowerCase().endsWith('.pdf') ? (
+                /* Show PDF via Google Docs Viewer to prevent Chrome auto-download of raw attachments */
+                <iframe
+                  src={`https://docs.google.com/viewer?url=${encodeURIComponent(activeCoverLetter.fileUrl)}&embedded=true`}
+                  className="w-full border-0 bg-gray-50"
+                  style={{ height: '85vh', minHeight: '800px' }}
+                  title="Cover Letter Preview"
+                />
+              ) : previewLoading ? (
                 <div className="flex items-center justify-center h-48 text-body text-sm gap-2">
                   <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                   Loading preview...
                 </div>
               ) : previewHtml ? (
                 <div dangerouslySetInnerHTML={{ __html: previewHtml }} />
-              ) : activeCoverLetter.fileUrl && activeCoverLetter.originalFilename.toLowerCase().endsWith('.pdf') ? (
-                /* Fallback: PDF direct iframe if HTML preview unavailable */
-                <iframe
-                  src={activeCoverLetter.fileUrl}
-                  className="w-full border-0"
-                  style={{ height: '85vh', minHeight: '800px' }}
-                  title="Cover Letter Preview"
-                />
               ) : (
                 <div className="flex flex-col items-center justify-center h-48 text-body text-sm gap-2">
                   <FileText className="w-8 h-8 text-gray-300" />

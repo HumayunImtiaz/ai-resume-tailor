@@ -96,7 +96,7 @@ Rules for rewriting & skill incorporation:
 2. Skill Incorporation (CRITICAL): Identify skills from the Job Description that naturally fit or align with the candidate's domain/experience. YOU MUST INTEGRATE THESE SKILLS directly and organically into the "skillCategories", "summary", and relevant "experience" or "projects" bullets. Do NOT just list them as missing if they are relevant to the user's experience realm; ADD THEM to the tailored text.
 3. Stage 2 (After Optimization): Calculate the true OPTIMIZED ATS match score (0-100) based strictly on the newly tailored resume content. The score MUST accurately reflect the added content (do not inflate artificially without content backing).
 4. Reorganize and rephrase existing content to emphasize job relevance while keeping candidate's contact info exact.
-5. Extract candidate's actual name, email, phone, location, links without fabricating any URLs.
+5. Extract candidate's actual name, email, phone, location. For links, you MUST include ALL original candidate links (e.g. LinkedIn, GitHub, Portfolio) provided in the context below into the contactLine.links array without fabricating any URLs.
 
 You MUST respond with exactly a valid JSON object matching this structure:
 {
@@ -156,7 +156,7 @@ You MUST respond with exactly a valid JSON object matching this structure:
 }`;
 
     const linksContext = links.length > 0
-      ? `\n\nThe candidate's resume contains these hyperlinks (use these exact URLs when referencing GitHub/LinkedIn/Portfolio/etc. in the contactLine.links array — do not invent or alter URLs):\n${JSON.stringify(links)}`
+      ? `\n\nThe candidate's resume contains these extracted hyperlinks:\n${JSON.stringify(links)}\n\nCRITICAL INSTRUCTION: You MUST include ALL of these provided links (such as LinkedIn, GitHub, Portfolio) in the tailored resume's "contactLine.links" array. Do NOT omit them.`
       : '';
 
     const coverLetterContext = safeCoverLetterText && safeCoverLetterText.trim().length > 0
