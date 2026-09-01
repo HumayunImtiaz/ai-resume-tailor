@@ -38,6 +38,24 @@ export const coverLetterController = {
     sendResponse(res, 200, 'success', result.data, 'Your Cover letters retrieved successfully');
   }) as RequestHandler,
 
+  getCoverLetterPreview: (async (req: Request, res: Response) => {
+    const userId = req.userId as string;
+    const coverLetterId = req.params.id as string;
+
+    const result = await coverLetterService.getCoverLetterPreview(userId, coverLetterId);
+
+    if (!result.success) {
+      if (result.error === 'Cover letter not found') {
+        sendResponse(res, 404, 'error', null, result.error as string);
+      } else {
+        sendResponse(res, 500, 'error', null, result.error as string);
+      }
+      return;
+    }
+
+    sendResponse(res, 200, 'success', result.data, 'Preview retrieved successfully');
+  }) as RequestHandler,
+
   deleteCoverLetter: (async (req: Request, res: Response) => {
     const userId = req.userId as string;
     const coverLetterId = req.params.id as string;

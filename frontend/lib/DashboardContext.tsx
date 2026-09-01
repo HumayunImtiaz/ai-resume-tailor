@@ -7,12 +7,14 @@ import { apiFetch } from "@/lib/api";
 export interface Resume {
   id: string;
   originalFilename: string;
+  fileUrl: string | null;
   uploadedAt: string;
 }
 
 export interface CoverLetter {
   id: string;
   originalFilename: string;
+  fileUrl: string | null;
   uploadedAt: string;
 }
 

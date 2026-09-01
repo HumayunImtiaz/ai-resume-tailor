@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useRef, useState } from "react";
-import { UploadCloud, CheckCircle2, AlertCircle } from "lucide-react";
+import { UploadCloud, CheckCircle2, AlertCircle, FileText } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 
 const ACCEPTED_TYPES = [
@@ -18,6 +18,7 @@ export default function CoverLetterUploader({ onUploadSuccess }: CoverLetterUplo
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [lastUploadedName, setLastUploadedName] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   const validateFile = (file: File): string | null => {
@@ -50,6 +51,7 @@ export default function CoverLetterUploader({ onUploadSuccess }: CoverLetterUplo
 
         const json = await res.json();
         setFeedback({ type: "success", message: json.message || "Your Cover letter uploaded successfully!" });
+        setLastUploadedName(file.name);
         onUploadSuccess();
 
         setTimeout(() => setFeedback(null), 3000);
@@ -121,6 +123,24 @@ export default function CoverLetterUploader({ onUploadSuccess }: CoverLetterUplo
             <p className="font-semibold text-lg text-heading tracking-tight">Processing Cover Letter</p>
             <p className="text-sm text-gray-500 mt-1">Applying AI extraction...</p>
           </div>
+        ) : lastUploadedName ? (
+          <>
+            <div className={`p-4 rounded-[20px] mb-6 transition-colors shadow-xl ${isDragging ? "bg-blue-500 text-white shadow-blue-500/30" : "bg-success/10 text-success border border-success/20 shadow-success/5"}`}>
+               {isDragging ? <UploadCloud className="w-8 h-8" /> : <CheckCircle2 className="w-8 h-8" />}
+            </div>
+            <p className="font-semibold text-lg text-heading mb-2">
+              {isDragging ? "Drop to replace" : "Successfully Uploaded"}
+            </p>
+            {!isDragging && (
+              <div className="mb-4 text-blue-600 font-medium px-4 py-2 bg-blue-50 rounded-lg border border-blue-100 flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                <span className="truncate max-w-[200px]">{lastUploadedName}</span>
+              </div>
+            )}
+            <p className="text-sm text-gray-500 max-w-xs px-4 bg-gray-50 py-1.5 rounded-full border border-gray-100">
+              Click or drop a new file to replace
+            </p>
+          </>
         ) : (
           <>
             <div className={`p-4 rounded-[20px] mb-6 transition-colors shadow-xl ${isDragging ? "bg-blue-500 text-white shadow-blue-500/30" : "bg-white text-gray-400 border border-gray-100 shadow-black/5"}`}>

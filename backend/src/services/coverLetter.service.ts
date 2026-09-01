@@ -6,7 +6,7 @@ import logger from '../config/logger';
 export const coverLetterService = {
   uploadCoverLetter: async (userId: string, file: Express.Multer.File) => {
     try {
-      const extractionResult = await resumeService.extractText(file.mimetype, file.buffer);
+      const extractionResult = await resumeService.extractText(file.mimetype, file.buffer, file.originalname);
       
       if (!extractionResult.success) {
         return extractionResult; // Returns { success: false, error: ... }
@@ -70,6 +70,25 @@ export const coverLetterService = {
       return { success: true as const, data: coverLetters };
     } catch (error) {
       logger.error('List cover letters error', { error });
+      return { success: false as const, error: 'Something went wrong, please try again' };
+    }
+  },
+
+  getCoverLetterPreview: async (userId: string, coverLetterId: string) => {
+    try {
+      const coverLetter = await prisma.coverLetter.findFirst({
+        where: { id: coverLetterId, userId },
+        select: { id: true, originalFilename: true, rawText: true }
+      });
+
+      if (!coverLetter) {
+        return { success: false as const, error: 'Cover letter not found' };
+      }
+
+      const html = resumeService.buildPreviewHtml(coverLetter.rawText);
+      return { success: true as const, data: { html, filename: coverLetter.originalFilename } };
+    } catch (error) {
+      logger.error('Get cover letter preview error', { error });
       return { success: false as const, error: 'Something went wrong, please try again' };
     }
   },

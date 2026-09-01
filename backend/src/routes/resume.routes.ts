@@ -75,6 +75,8 @@ router.post(
  */
 router.get('/', requireAuth, resumeController.listResumes);
 
+router.get('/:id/preview', requireAuth, resumeController.getResumePreview);
+
 /**
  * @swagger
  * /api/resumes/{id}:

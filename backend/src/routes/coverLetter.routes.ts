@@ -75,6 +75,8 @@ router.post(
  */
 router.get('/', requireAuth, coverLetterController.listCoverLetters);
 
+router.get('/:id/preview', requireAuth, coverLetterController.getCoverLetterPreview);
+
 /**
  * @swagger
  * /api/cover-letters/{id}:
