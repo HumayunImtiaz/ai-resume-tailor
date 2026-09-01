@@ -210,7 +210,7 @@ export default function DashboardSidebar({ onClose }: { onClose?: () => void }) 
             </div>
             <div>
               <span className="font-fraunces text-lg font-bold tracking-tight text-white leading-tight flex items-center gap-1.5">
-                AI Tailor <Sparkles className="w-3.5 h-3.5 text-accent" />
+                ShortlistAI <Sparkles className="w-3.5 h-3.5 text-accent" />
               </span>
               <span className="text-[10px] text-white/50 font-semibold tracking-wider block uppercase">
                 Resume Engine
@@ -255,9 +255,8 @@ export default function DashboardSidebar({ onClose }: { onClose?: () => void }) 
             </button>
 
             <div
-              className={`overflow-hidden transition-all duration-300 ease-in-out flex flex-col ${
-                isProfileOpen ? "max-h-40 opacity-100 mt-1 pointer-events-auto" : "max-h-0 opacity-0 mt-0 pointer-events-none"
-              }`}
+              className={`overflow-hidden transition-all duration-300 ease-in-out flex flex-col ${isProfileOpen ? "max-h-40 opacity-100 mt-1 pointer-events-auto" : "max-h-0 opacity-0 mt-0 pointer-events-none"
+                }`}
             >
               <div className="ml-4 pl-3 border-l border-white/10 flex flex-col gap-1">
                 <Link
@@ -284,11 +283,10 @@ export default function DashboardSidebar({ onClose }: { onClose?: () => void }) 
           <Link
             href="/dashboard"
             onClick={onClose}
-            className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all ${
-              isNewJobActive && !isProfileAnyActive && !isSettingsActive
-                ? 'bg-accent/15 text-accent border border-accent/30 font-bold text-xs'
-                : 'hover:bg-white/5 text-white/80 hover:text-white font-semibold text-xs'
-            }`}
+            className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all ${isNewJobActive && !isProfileAnyActive && !isSettingsActive
+              ? 'bg-accent/15 text-accent border border-accent/30 font-bold text-xs'
+              : 'hover:bg-white/5 text-white/80 hover:text-white font-semibold text-xs'
+              }`}
           >
             {isNewJobActive && !isProfileAnyActive && !isSettingsActive ? (
               <Plus className="w-4 h-4 stroke-[3]" />
@@ -426,11 +424,10 @@ export default function DashboardSidebar({ onClose }: { onClose?: () => void }) 
           <Link
             href="/dashboard/settings"
             onClick={onClose}
-            className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl transition-all text-xs border ${
-              isSettingsActive
-                ? 'bg-accent/15 text-accent border-accent/30 font-bold'
-                : 'border-transparent text-white/80 hover:bg-white/5 hover:text-white font-semibold hover:border-white/10'
-            }`}
+            className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl transition-all text-xs border ${isSettingsActive
+              ? 'bg-accent/15 text-accent border-accent/30 font-bold'
+              : 'border-transparent text-white/80 hover:bg-white/5 hover:text-white font-semibold hover:border-white/10'
+              }`}
           >
             <Settings className="w-4 h-4" />
             Settings & Danger Zone

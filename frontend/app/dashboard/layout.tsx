@@ -22,11 +22,11 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen bg-background text-body font-sans antialiased overflow-hidden selection:bg-primary/20">
-      
+
       {/* Mobile Menu Backdrop */}
       {mobileMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-navy-900/60 backdrop-blur-sm z-40 md:hidden animate-fadeIn" 
+        <div
+          className="fixed inset-0 bg-navy-900/60 backdrop-blur-sm z-40 md:hidden animate-fadeIn"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
@@ -40,11 +40,11 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       </div>
 
       <main className="flex-1 overflow-y-auto overflow-x-hidden relative h-full w-full min-w-0">
-        
+
         {/* Mobile Header with Hamburger */}
         <div className="md:hidden flex items-center justify-between p-4 bg-white/80 backdrop-blur-lg border-b border-navy-100 sticky top-0 z-30">
           <div className="font-fraunces font-bold text-navy-900 flex items-center gap-2">
-            AI Tailor
+            ShortlistAI
           </div>
           <button onClick={() => setMobileMenuOpen(true)} className="p-2 bg-white rounded-lg border border-navy-200 shadow-sm text-navy-700">
             <Menu className="w-5 h-5" />
