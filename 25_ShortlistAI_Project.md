@@ -45,3 +45,4 @@ Jab user apna resume daalta hai toh wo system me kaise process hota hai:
 ---
 
 Ye pura stack effectively multiple enterprise designs pattern follow karta hai jese **Message Queuing (BullMQ)**, **Microservices-esque Separation (Workers vs API handlers)** aur **AI Prompt Engineering** in backend APIs. Ek true Full-Stack enterprise application.
+that should be completed 
